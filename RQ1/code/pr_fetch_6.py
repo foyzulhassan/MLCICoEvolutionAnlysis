@@ -18,7 +18,7 @@ def get_pr_details(commit_sha, repo):
         search_results = response.json()
         print(f"Received {len(search_results['items'])} items")  
         if search_results['total_count'] > 0:
-            pr = search_results['items'][0]  # Assuming the first result is the relevant PR
+            pr = search_results['items'][0] 
             pr_details.update({
                 'isPR': True,
                 'PRTitle': pr['title'],
