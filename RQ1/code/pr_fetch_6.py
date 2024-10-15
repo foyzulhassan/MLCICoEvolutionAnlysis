@@ -34,7 +34,7 @@ def get_pr_details(commit_sha, repo):
         return get_pr_details(commit_sha, repo) 
     else:
         print(f"Failed to fetch data: Status code {response.status_code}")  
-        # pr_details['Status'] = f'Failed: {response.status_code}'
+        pr_details['Status'] = f'Failed: {response.status_code}'
     return pr_details
 
 

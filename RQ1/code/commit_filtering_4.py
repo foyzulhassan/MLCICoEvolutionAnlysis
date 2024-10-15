@@ -10,7 +10,7 @@ def check_ml_keywords(file_path):
     return any(keyword in file_path for keyword in ml_keywords)
 
 
-df = pd.read_csv('C:\\paper\\empirical_analysis\\data\\RQ1\\cleaned_ci_modifying_commits.csv')
+df = pd.read_csv('C:\\paper\\co_evolution_analysis\\data\\RQ1\\cleaned_ci_modifying_commits.csv')
 print(df.columns)
 
 filtered_rows = []
