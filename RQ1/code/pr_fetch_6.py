@@ -4,7 +4,7 @@ import os
 import time
 
 
-github_token = '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'
+github_token = '' #Add your GitHub token here
 headers = {'Authorization': f'token {github_token}'}
 
 def get_pr_details(commit_sha, repo):
