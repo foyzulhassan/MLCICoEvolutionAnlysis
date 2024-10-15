@@ -12,17 +12,17 @@ def contains_workflow_yml_files(modified_files):
     return False
 
 # Define the path where repositories are cloned
-clone_repo_path = 'C:\\paper\\empirical_analysis\\data\\repos'
+clone_repo_path = 'E:\\ProjectsMLCI'
 
 # Open or create the CSV file for writing commit data
-output_path = "C:\\paper\\empirical_analysis\\data\\RQ1\\ci_modifying_commits.csv"
+output_path = "C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\dataci_modifying_commits.csv"
 with open(output_path, "w", newline='', encoding='utf-8') as write_file:
     header = ['GitAuthor', 'ProjectName', 'CommitID', 'CommitMessage', 'Lsof ModifiedFiles']
     writer = csv.writer(write_file)
     writer.writerow(header)
 
     # Read the dataframe containing repository names
-    input_csv_path = 'C:\\paper\\empirical_analysis\\data\\RQ1\\repo_list.csv'
+    input_csv_path = 'C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\repo_list.csv'
     readDataframe = pd.read_csv(input_csv_path)
     for index, row in readDataframe.iterrows():
         repo_name = row['RepoName']

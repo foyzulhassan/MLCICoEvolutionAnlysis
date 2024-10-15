@@ -3,10 +3,10 @@ from git import Repo
 import os
 
 # Base path
-clone_repo_path = 'C:\\paper\\empirical_analysis\\data\\repos'
+clone_repo_path = 'E:\\ProjectsMLCI\\'
 
 # Read the CSV file 
-dataframe = pd.read_csv('C:\\paper\\empirical_analysis\\data\\RQ1\\repo_list.csv')
+dataframe = pd.read_csv('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\repo_list.csv')
 reponame = dataframe['RepoName']
 repoURL = dataframe['GitHubURL']
 
@@ -14,6 +14,8 @@ repoURL = dataframe['GitHubURL']
 export = dataframe.values.T[0].tolist()
 
 # Loop 
+# create file for failed repos 
+failed_repos = open("failed_repos.txt", "w")
 for cell in range(len(export)):
     print("Row: ", cell)  
     print("Cloning Repository name:", reponame[cell])
@@ -32,5 +34,8 @@ for cell in range(len(export)):
             print("Done cloning", reponame[cell], "repository.")
         except Exception as e:
             print(f"Failed to clone {reponame[cell]}. Error: {str(e)}")
-
+            failed_repos.write(reponame[cell] + "\n")
+            failed_repos.flush()
+            
+failed_repos.close()
 print("Cloned all repositories.")
