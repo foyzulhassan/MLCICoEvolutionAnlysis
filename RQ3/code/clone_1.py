@@ -2,13 +2,15 @@ import csv
 import os
 
 # Paths for input and output
-input_csv_path = 'C:\\paper\\co_evolution_analysis\\RQ3\\data\\repo_list.csv'
-clone_dir = 'C:\\paper\\empirical_analysis\\data\\repos'
-output_csv_path = 'C:\\paper\\co_evolution_analysis\\RQ3\\data\\validated_clonedProjects.csv'
+input_csv_path = '../../RQ3/data/repo_list_partial.csv'
+clone_dir = 'C:\\Users\\dhiarzig\\Documents\\temp_repos'
+output_csv_path = '..\\..\\RQ3\\data\\validated_clonedProjects.csv'
 
 # Reading the repo list and preparing the local paths with validation
 clonedProjects = []
 header = ['RepoName', 'path', 'Exists']
+#print current directory
+print(os.getcwd())
 
 with open(input_csv_path, 'r', newline='', encoding='utf-8-sig') as csv_file:
     csv_reader = csv.DictReader(csv_file)

@@ -3,10 +3,10 @@ from git import Repo
 import os
 
 # Base path
-clone_repo_path = 'E:\\ProjectsMLCI\\'
+clone_repo_path = 'C:\\Users\\dhiarzig\\Documents\\temp_repos'
 
 # Read the CSV file 
-dataframe = pd.read_csv('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\repo_list.csv')
+dataframe = pd.read_csv('../../RQ3/data/repo_list_partial.csv')
 reponame = dataframe['RepoName']
 repoURL = dataframe['GitHubURL']
 
