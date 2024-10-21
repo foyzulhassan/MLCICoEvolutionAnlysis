@@ -1,0 +1,263 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - developer
+      - master
+  pull_request:
+    branches:
+      - developer
+      - master
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 15
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-build-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-build-
+      - name: Build with Maven
+        run: mvn clean install -DskipTests package --file ./backend/pom.xml
+
+  lint-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-lint-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-lint-
+      - name: Lint Java Code
+        run: mvn checkstyle:checkstyle -Pcode-analysis --file ./backend/pom.xml
+
+  analyse-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-analyse-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-analyse-
+      - name: Analyse Java Code for bugs
+        run: mvn install -DskipTests --file ./backend/pom.xml && mvn spotbugs:check -Pcode-analysis --file ./backend/pom.xml
+
+  test-unit-backend:
+    needs: [lint-backend, analyse-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 15
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-test-unit-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-test-unit-
+      - name: Run unit tests with Maven
+        run: mvn clean test --file ./backend/pom.xml
+
+  test-integration-backend:
+    needs: test-unit-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 15
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-test-integration-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-test-integration-
+      - name: Run integration tests with Maven
+        run: mvn clean verify -Dsurefire.skip=true --file ./backend/pom.xml
+
+  package-backend:
+    needs: test-integration-backend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Docker image for the backend
+        uses: ./.github/actions/build-docker-image
+        with:
+          context: ./backend
+          tag: alex-backend
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Lint TypeScript code
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: cd ./frontend && npm ci && npm run lint
+
+  test-unit-frontend:
+    needs: lint-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Angular unit tests
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: cd ./frontend && npm ci && npm run test -- --no-watch --no-progress --browsers=ChromeHeadlessCI
+
+  package-frontend:
+    needs: test-unit-frontend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Docker image for the frontend
+        uses: ./.github/actions/build-docker-image
+        with:
+          context: ./frontend
+          tag: alex-frontend
+
+  lint-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Lint CI TypeScript code
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: cd ./cli && npm ci && npm run lint
+
+  package-cli:
+    needs: lint-cli
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Docker image for the CLI
+        uses: ./.github/actions/build-docker-image
+        with:
+          context: ./cli
+          tag: alex-cli
+
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build docs
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: cd ./docs && npm install -g npm && npm ci && npm run build
+
+  package-docs:
+    needs: build-docs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build the Docker image for the docs
+        uses: ./.github/actions/build-docker-image
+        with:
+          context: ./docs
+          tag: alex-docs
+
+  release-images:
+    needs:
+      - package-frontend
+      - package-backend
+      - package-cli
+      - package-docs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+      - name: Release frontend
+        uses: ./.github/actions/release-docker-image
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          image: alex-frontend
+      - name: Release backend
+        uses: ./.github/actions/release-docker-image
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          image: alex-backend
+      - name: Release CLI
+        uses: ./.github/actions/release-docker-image
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          image: alex-cli
+      - name: Release docs
+        uses: ./.github/actions/release-docker-image
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          image: alex-docs
+
+  release-packages:
+    needs:
+      - package-frontend
+      - package-backend
+      - package-cli
+      - package-docs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up JDK 15
+        uses: actions/setup-java@v1
+        with:
+          java-version: 15.0
+      - name: Set up cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.m2
+            !~/.m2/repository/de/learnlib/alex
+          key: cache-deploy-${{ hashFiles('**/pom.xml') }}
+          restore-keys: cache-deploy-
+      - name: Deploy
+        env:
+          MVN_PACKAGE_REGISTRY_USERNAME: ${{ secrets.MVN_PACKAGE_REGISTRY_USERNAME }}
+          MVN_PACKAGE_REGISTRY_PASSWORD: ${{ secrets.MVN_PACKAGE_REGISTRY_PASSWORD }}
+        run: |
+          cd backend && mvn -B -s $GITHUB_WORKSPACE/.github/settings.xml install deploy:deploy-file \
+            -DpomFile=-/pom.xml \
+            -Dfile=./target/ALEX-3.0.0-SNAPSHOT-jar-with-dependencies.jar \
+            -DrepositoryId=github \
+            -Durl=https://maven.pkg.github.com/learnlib/alex \
+            -DskipTests

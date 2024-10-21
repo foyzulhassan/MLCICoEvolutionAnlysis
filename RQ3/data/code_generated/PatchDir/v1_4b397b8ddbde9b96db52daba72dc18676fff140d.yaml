@@ -1,0 +1,35 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: SLM Lab
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v1
+      with:
+        path: ~/miniconda3
+        key: ${{ runner.os }}-conda-${{ hashFiles('environment.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-conda-
+    - name: Setup Conda dependencies
+      uses: goanpeca/setup-miniconda@v1.1.2
+      with:
+         activate-environment: lab
+         environment-file: environment.yml
+         python-version: 3.7
+         auto-activate-base: false
+    - name: Run tests
+      run: |
+        conda activate lab
+        python setup.py test

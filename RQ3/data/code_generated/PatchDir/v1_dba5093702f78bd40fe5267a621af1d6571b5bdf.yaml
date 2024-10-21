@@ -1,0 +1,65 @@
+name: sw
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04, macOS-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - uses: egorpugin/sw-action@master
+
+    - name: build
+      if: matrix.os == 'windows-latest'
+      run: ./sw -static -shared -platform x86,x64 -config d,r build
+
+    - name: build
+      if: matrix.os != 'windows-latest'
+      run: ./sw -static -shared -config d,r build -Dwith-tests=1
+
+    - name: download test data
+      if: matrix.os != 'windows-latest'
+      run: git clone https://github.com/egorpugin/tessdata tessdata_unittest
+
+    - name: test
+      if: matrix.os != 'windows-latest'
+      run: ./sw -static -shared -config d,r test -Dwith-tests=1 -Dskip-tests=lstm,lstm_recode
+
+    - name: Upload Unit Test Results
+      if: always()
+      uses: actions/upload-artifact@v2
+      with:
+        name: Unit Test Results
+        path: .sw/test/results.xml
+                
+  publish-test-results:
+    name: "Publish Unit Tests Results"
+    needs: build-and-test
+    runs-on: ${{ matrix.os }}
+    # the build-and-test job might be skipped, we don't need to run this job then
+    if: success() || failure()
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04, macOS-latest]
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish Unit Test Results
+        if: matrix.os == 'ubuntu-20.04'
+        uses: EnricoMi/publish-unit-test-result-action@v1.6
+        with:
+          check_name: Unit Test Results
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: .sw/test/results.xml

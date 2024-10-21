@@ -1,0 +1,20 @@
+name: coverage
+
+on:
+  - push
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: pip install nox codecov
+    - name: Test with nox
+      run: nox -e coverage
+    - name: Upload test coverage
+      run: codecov -t ${{ secrets.CODECOV_TOKEN }} -f .coverage.xml

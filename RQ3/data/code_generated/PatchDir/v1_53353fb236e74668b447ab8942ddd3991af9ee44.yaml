@@ -1,0 +1,33 @@
+on: [ push ]
+
+jobs:
+  test:
+    name: ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [ "php5.6-phpunit4.8-wordpress4.4", "php7.1-phpunit4.8-wordpress5.5" ]
+      max-parallel: 1
+    env:
+      ACF_PRO_KEY: ${{ secrets.ACF_PRO_KEY }}
+      WORDLIFT_API_URL: ${{  secrets.WORDLIFT_API_URL }}
+      WORDLIFT_KEY: ${{ secrets.WORDLIFT_KEY }}
+    services:
+      db:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_USER: wordpress
+          MYSQL_PASSWORD: password
+          MYSQL_DATABASE: wordpress
+        ports:
+          - 3306:3306
+    steps:
+      - uses: actions/checkout@v2
+      - run: >
+          GITHUB_NETWORK=$(docker network ls --format="{{ .Name }}" --filter "Name=^github_network_") && \
+          echo $DOCKER_GITHUB_NETWORK && \
+          docker run --workdir /github/workspace --rm -v "/var/run/docker.sock":"/var/run/docker.sock" \
+            -v $GITHUB_WORKSPACE:"/github/workspace" \
+            --network $DOCKER_GITHUB_NETWORK \
+              ziodave/wordpress-tests:${{ matrix.image }} -c phpunit.xml

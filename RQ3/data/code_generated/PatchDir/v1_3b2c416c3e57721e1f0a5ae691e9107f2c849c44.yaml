@@ -1,0 +1,151 @@
+# ----------------------------------------------------------------------
+# Wordless: CI - Github Actions
+# Copyright (C) 2018-2023  Ye Lei (叶磊)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------
+
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  # Windows
+  build-windows:
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_tests.txt'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install --requirement requirements/requirements_tests.txt
+          pip install --requirement requirements/requirements_no_deps.txt --no-deps
+          # For Codecov
+          pip install pytest-cov
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests and collect coverage
+      - name: Run Tests and collect coverage
+        run: |
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/wl_tests_spacy/test_spacy_eng.py
+
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_sentence_tokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_word_tokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_syl_tokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_pos_tagging.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_lemmatization.py
+
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/ --ignore=tests/wl_tests_nlp/wl_tests_spacy --ignore=tests/wl_tests_nlp/test_sentence_tokenization.py --ignore=tests/wl_tests_nlp/test_word_tokenization.py --ignore=tests/wl_tests_nlp/test_syl_tokenization.py --ignore=tests/wl_tests_nlp/test_pos_tagging.py --ignore=tests/wl_tests_nlp/test_lemmatization.py
+
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_file_area/test_file_area.py
+          pytest --cov=./ --cov-report=xml --cov-append --ignore=tests/wl_tests_nlp --ignore=tests/wl_tests_file_area/test_file_area.py
+
+      # Upload coverage to Codecov
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v3
+
+  # macOS
+  build-macos:
+    runs-on: macos-11
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_tests.txt'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install --requirement requirements/requirements_tests.txt
+          pip install --requirement requirements/requirements_no_deps.txt --no-deps
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          pytest tests/wl_tests_nlp/wl_tests_spacy/test_spacy_eng.py
+
+          pytest tests/wl_tests_nlp/test_sentence_tokenization.py
+          pytest tests/wl_tests_nlp/test_word_tokenization.py
+          pytest tests/wl_tests_nlp/test_syl_tokenization.py
+          pytest tests/wl_tests_nlp/test_pos_tagging.py
+          pytest tests/wl_tests_nlp/test_lemmatization.py
+
+          pytest tests/wl_tests_nlp/ --ignore=tests/wl_tests_nlp/wl_tests_spacy --ignore=tests/wl_tests_nlp/test_sentence_tokenization.py --ignore=tests/wl_tests_nlp/test_word_tokenization.py --ignore=tests/wl_tests_nlp/test_syl_tokenization.py --ignore=tests/wl_tests_nlp/test_pos_tagging.py --ignore=tests/wl_tests_nlp/test_lemmatization.py
+
+          pytest tests/wl_tests_file_area/test_file_area.py
+          pytest --ignore=tests/wl_tests_nlp --ignore=tests/wl_tests_file_area/test_file_area.py
+
+  # Linux
+  build-linux:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_tests.txt'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install --requirement requirements/requirements_tests.txt
+          pip install --requirement requirements/requirements_no_deps.txt --no-deps
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          # Fix PyQt
+          export QT_QPA_PLATFORM=offscreen
+
+          pytest tests/wl_tests_nlp/wl_tests_spacy/test_spacy_eng.py
+
+          pytest tests/wl_tests_nlp/test_sentence_tokenization.py
+          pytest tests/wl_tests_nlp/test_word_tokenization.py
+          pytest tests/wl_tests_nlp/test_syl_tokenization.py
+          pytest tests/wl_tests_nlp/test_pos_tagging.py
+          pytest tests/wl_tests_nlp/test_lemmatization.py
+
+          pytest tests/wl_tests_nlp/ --ignore=tests/wl_tests_nlp/wl_tests_spacy --ignore=tests/wl_tests_nlp/test_sentence_tokenization.py --ignore=tests/wl_tests_nlp/test_word_tokenization.py --ignore=tests/wl_tests_nlp/test_syl_tokenization.py --ignore=tests/wl_tests_nlp/test_pos_tagging.py --ignore=tests/wl_tests_nlp/test_lemmatization.py
+
+          pytest tests/wl_tests_file_area/test_file_area.py
+          pytest --ignore=tests/wl_tests_nlp --ignore=tests/wl_tests_file_area/test_file_area.py

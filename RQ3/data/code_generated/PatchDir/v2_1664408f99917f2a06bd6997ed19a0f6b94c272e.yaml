@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  push:
+    branches:
+    - master
+    - syft_0.3.0
+    paths:
+    - '**.py'
+    - 'setup.cfg'
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+    - '**.py'
+    - 'setup.cfg'
+
+jobs:
+  python-tests:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - uses: actions/cache@v1.1.2
+    - name: Cache packages
+      id: cache-reqs
+      with:
+        path: ~/.eggs
+        key: ${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('**.egg') }}
+
+    - name: Scan for security issues
+      run: |
+            bandit -r syft -ll
+    - name: Install
+      run: |
+            python setup.py install
+    - name: Run flake8
+      run: |
+            python setup.py flake8
+    - name: Run tests with coverage
+      run: |
+            python setup.py test

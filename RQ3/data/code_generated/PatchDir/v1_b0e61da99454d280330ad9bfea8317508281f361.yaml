@@ -1,0 +1,74 @@
+name: Build
+
+on:
+  push:
+    paths:
+      - '.github/workflows/**'
+      - 'include/**'
+      - 'scripts/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'setup.py'
+      - 'pyproject.toml'
+    branches:
+      - master
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'include/**'
+      - 'scripts/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'setup.py'
+      - 'pyproject.toml'
+    branches:
+      - master
+
+env:
+  HOMEBREW_NO_AUTO_UPDATE: 1
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04, macos-12]
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies on Ubuntu
+      if: runner.os == 'Linux'
+      run: |
+           sudo apt update
+           sudo apt install -y cmake libboost-all-dev libsdl2-dev libfreetype6-dev libgl1-mesa-dev libglu1-mesa-dev libpng-dev libjpeg-dev libbz2-dev libfluidsynth-dev libgme-dev libopenal-dev zlib1g-dev timidity tar nasm
+
+    - name: Apt report
+      if: runner.os == 'Linux'
+      run: apt list --installed
+
+    - name: Install dependencies on MacOS
+      if: runner.os == 'macOS'
+      run: brew install cmake boost openal-soft sdl2
+
+    - name: Set up Python ${{ matrix.python-version }} environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Python environment report
+      run: python -c "import sys; print(sys.version)"
+
+    - name: Pip install
+      run: pip install .[test]
+
+    - name: Import check
+      run: python -c "import vizdoom"
+
+    - name: Run tests
+      run: pytest tests

@@ -1,0 +1,144 @@
+# ----------------------------------------------------------------------
+# Wordless: CI - Github Actions
+# Copyright (C) 2018-2022  Ye Lei (叶磊)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------
+
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    runs-on: windows-2016
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+        cache: 'pip'
+
+    - name: Check Python version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install -r requirements.txt
+        pip install pytest-cov
+        python utils/wl_downloader_ci.py
+
+    - name: Run Tests and collect coverage
+      run: |
+        cd src
+        $env:PYTHONPATH += $PWD
+
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_lemmatization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_matching.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_nlp_utils.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_pos_tagging.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_sentence_tokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_stop_word_lists.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_syl_tokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_word_detokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_nlp/test_word_tokenization.py
+
+        pytest --cov=./ --cov-report=xml wl_tests/wl_tests_file_area
+        pytest --cov=./ --cov-report=xml --ignore=wl_tests/wl_tests_nlp --ignore=wl_tests/wl_tests_file_area
+
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v2
+
+  build-macos:
+    runs-on: macos-10.15
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+        cache: 'pip'
+
+    - name: Check Python version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install numpy
+        pip install -r requirements.txt
+        python utils/wl_downloader_ci.py
+
+    - name: Run Tests
+      run: |
+        cd src
+        export PYTHONPATH="$PYTHONPATH;$PWD"
+
+        pytest wl_tests/wl_tests_nlp/test_lemmatization.py
+        pytest wl_tests/wl_tests_nlp/test_matching.py
+        pytest wl_tests/wl_tests_nlp/test_nlp_utils.py
+        pytest wl_tests/wl_tests_nlp/test_pos_tagging.py
+        pytest wl_tests/wl_tests_nlp/test_sentence_tokenization.py
+        pytest wl_tests/wl_tests_nlp/test_stop_word_lists.py
+        pytest wl_tests/wl_tests_nlp/test_syl_tokenization.py
+        pytest wl_tests/wl_tests_nlp/test_word_detokenization.py
+        pytest wl_tests/wl_tests_nlp/test_word_tokenization.py
+
+        pytest wl_tests/wl_tests_file_area
+        pytest --ignore=wl_tests/wl_tests_nlp --ignore=wl_tests/wl_tests_file_area
+
+  build-linux:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+        cache: 'pip'
+
+    - name: Check Python version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install numpy
+        pip install -r requirements.txt
+        python utils/wl_downloader_ci.py
+
+    - name: Run Tests
+      run: |
+        cd src
+        export PYTHONPATH="$PYTHONPATH;$PWD"
+
+        pytest wl_tests/wl_tests_nlp/test_lemmatization.py
+        pytest wl_tests/wl_tests_nlp/test_matching.py
+        pytest wl_tests/wl_tests_nlp/test_nlp_utils.py
+        pytest wl_tests/wl_tests_nlp/test_pos_tagging.py
+        pytest wl_tests/wl_tests_nlp/test_sentence_tokenization.py
+        pytest wl_tests/wl_tests_nlp/test_stop_word_lists.py
+        pytest wl_tests/wl_tests_nlp/test_syl_tokenization.py
+        pytest wl_tests/wl_tests_nlp/test_word_detokenization.py
+        pytest wl_tests/wl_tests_nlp/test_word_tokenization.py
+
+        pytest --ignore=wl_tests/wl_tests_nlp --ignore=wl_tests/wl_tests_file_area --ignore=wl_tests/wl_tests_work_area

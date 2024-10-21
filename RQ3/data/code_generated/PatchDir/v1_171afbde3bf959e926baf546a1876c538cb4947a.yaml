@@ -1,0 +1,44 @@
+name: SlowCI
+on:
+    push:
+        branches: ["*"]
+    pull_request:
+        branches: ["*"]
+jobs:
+    tests:
+        name: "Python ${{ matrix.python-version }}"
+        runs-on: "ubuntu-latest"
+        timeout-minutes: 240
+        strategy:
+            matrix:
+                python-version: ["3.11", "3.12"]
+        steps:
+            - uses: "actions/checkout@v4"
+            - uses: "actions/setup-python@v5"
+              with:
+                  python-version: "${{ matrix.python-version }}"
+            - uses: actions/setup-java@v4
+              with:
+                  distribution: "zulu" # See 'Supported distributions' for available options
+                  java-version: "15"
+            - name: "Install dependencies"
+              run: |
+                  set -xe
+                  ulimit -n 50000
+                  python -VV
+                  python -m site
+                  python -m pip install --upgrade pip setuptools wheel pytest
+                  python -m pip install --upgrade  virtualenv
+                  python -m pip install -r requirements.txt
+                  python -m pip install -r requirements-dev.txt
+                  python -m ipykernel install --user --name=negmas
+                  python -m pip install -e .
+                  negmas genius-setup
+            - name: "running genius bridge"
+              run: "java -jar $HOME/negmas/files/geniusbridge.jar --silent --no-logs &"
+            - name: "Setting up environment"
+              run: |
+                  export NEGMAS_IGNORE_TEST_NOTEBOOKS=True
+                  export NEGMAS_FASTRUN=True
+            - name: "Run pytest for ${{ matrix.python-version }}"
+              run: "python -W ignore -m pytest negmas tests/optional || python -W ignore -m pytest --last-failed ."

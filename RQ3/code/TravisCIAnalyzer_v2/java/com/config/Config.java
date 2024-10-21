@@ -45,7 +45,7 @@ public class Config {
 	 public static String csvCmdTypeFile=rootDir+"command_type_new_ML_Non_Ml.csv";
 	 
 	 //public static String csvCITransitionFile=rootDir+"Tool_transition.csv";
-	 public static String csvCITransitionFile="C:\\paper\\co_evolution_analysis\\RQ3\\data\\test_3.csv";
+	 public static String csvCITransitionFile="C:\\paper\\co_evolution_analysis\\RQ3\\data\\cleaned_ci_modifying_commits";
 	 
 	 public static String csvBlockCategory=Config.rootDir+"block_type.csv";
 			 

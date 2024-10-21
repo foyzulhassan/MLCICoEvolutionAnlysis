@@ -1,0 +1,55 @@
+name: "00 PR Auto approve"
+
+on:
+  pull_request: null
+  repository_dispatch:
+    types:
+      - approve-pr
+  pull_request_review:
+    types:
+      - submitted
+
+# https://github.com/marketplace/actions/repository-dispatch
+jobs:
+  trigger-approve-pr:
+    if: ${{ github.event_name == 'pull_request_review' && contains(fromJson('["pdxjohnny"]'), github.actor) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 'Repository Dispatch: approve-pr'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          event-type: approve-pr
+          client-payload: |-
+            {
+              "actor": "${{ github.actor }}",
+              "pull_request": {
+                "number": "${{ github.event.pull_request.number }}"
+              }
+            }
+
+  approve-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    if: ${{ github.event_name == 'repository_dispatch' && contains(fromJson('["github-actions[bot]", "pdxjohnny"]'), github.event.sender.login) && contains(fromJson('["dependabot[bot]", "github-actions[bot]", "pdxjohnny"]'), github.event.client_payload.actor) }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit
+
+      - uses: hmarr/auto-approve-action@8f929096a962e83ccdfa8afcf855f39f12d4dac7 # v4
+        with:
+          review-message: "LGTM"
+          pull-request-number: ${{ github.event.client_payload.pull_request.number }}
+
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.client_payload.pull_request.number }}
+        run: |
+          set -x
+          gh pr merge --rebase "${PULL_REQUEST_NUMBER}"

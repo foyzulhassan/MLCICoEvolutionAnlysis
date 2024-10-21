@@ -1,0 +1,139 @@
+# ----------------------------------------------------------------------
+# Wordless: CI - Github Actions
+# Copyright (C) 2018-2024  Ye Lei (叶磊)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------
+
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  # Windows
+  build-windows:
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_tests.txt'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install --requirement requirements/requirements_tests.txt
+          # For Codecov
+          pip install pytest-cov
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests and collect coverage
+      - name: Run Tests and collect coverage
+        run: |
+          pytest --cov=./ --cov-report=xml --cov-append tests/tests_nlp/tests_spacy/test_spacy_eng.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/tests_nlp/tests_stanza/test_stanza_eng.py
+
+          pytest --cov=./ --cov-report=xml --cov-append tests/tests_nlp/test_word_tokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/tests_nlp/test_pos_tagging.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/tests_nlp/test_lemmatization.py
+
+          pytest --cov=./ --cov-report=xml --cov-append tests/tests_nlp/ --ignore=tests/tests_nlp/tests_spacy --ignore=tests/tests_nlp/tests_stanza --ignore=tests/tests_nlp/test_word_tokenization.py --ignore=tests/tests_nlp/test_pos_tagging.py --ignore=tests/tests_nlp/test_lemmatization.py
+          pytest --cov=./ --cov-report=xml --cov-append --ignore=tests/tests_nlp
+
+      # Upload coverage to Codecov
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v3
+
+  # macOS
+  build-macos:
+    runs-on: macos-11
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_tests.txt'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install --requirement requirements/requirements_tests.txt
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          pytest tests/tests_nlp/tests_spacy/test_spacy_eng.py
+          pytest tests/tests_nlp/tests_stanza/test_stanza_eng.py
+
+          pytest tests/tests_nlp/test_word_tokenization.py
+          pytest tests/tests_nlp/test_pos_tagging.py
+          pytest tests/tests_nlp/test_lemmatization.py
+
+          pytest tests/tests_nlp/ --ignore=tests/tests_nlp/tests_spacy --ignore=tests/tests_nlp/tests_stanza --ignore=tests/tests_nlp/test_word_tokenization.py --ignore=tests/tests_nlp/test_pos_tagging.py --ignore=tests/tests_nlp/test_lemmatization.py
+          pytest --ignore=tests/tests_nlp
+
+  # Linux
+  build-linux:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          architecture: 'x64'
+          cache: 'pip'
+          cache-dependency-path: 'requirements/requirements_tests.txt'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install --requirement requirements/requirements_tests.txt
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          # Fix PyQt
+          export QT_QPA_PLATFORM=offscreen
+
+          pytest tests/tests_nlp/tests_spacy/test_spacy_eng.py
+          pytest tests/tests_nlp/tests_stanza/test_stanza_eng.py
+
+          pytest tests/tests_nlp/test_word_tokenization.py
+          pytest tests/tests_nlp/test_pos_tagging.py
+          pytest tests/tests_nlp/test_lemmatization.py
+
+          pytest tests/tests_nlp/ --ignore=tests/tests_nlp/tests_spacy --ignore=tests/tests_nlp/tests_stanza --ignore=tests/tests_nlp/test_word_tokenization.py --ignore=tests/tests_nlp/test_pos_tagging.py --ignore=tests/tests_nlp/test_lemmatization.py
+          pytest --ignore=tests/tests_nlp --ignore=tests/tests_settings

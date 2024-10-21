@@ -1,0 +1,44 @@
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: MajorScruffy/delete-old-workflow-runs@v0.2.0
+        with:
+          repository: flairNLP/flair
+          older-than-seconds: 21600000  # 8 months -> 8 * 30 * 25 * 60 * 60
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TRANSFORMERS_CACHE: ./cache/transformers
+      FLAIR_CACHE_ROOT: ./cache/flair
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.8
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Install Flair dependencies
+        run: pip install -e .
+      - name: Install unittest dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Show installed dependencies
+        run: pip freeze
+      - name: Cache downloaded models/datasets
+        uses: actions/cache@v3
+        with:
+          path: ./cache
+          key: cache-v1.1
+      - name: Run tests
+        run: |
+          python -c 'import flair'
+          pytest --runintegration --durations=0 -vv

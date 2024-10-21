@@ -1,0 +1,19 @@
+name: V1 Python Lint
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  python-lint:
+
+    runs-on: ubuntu-latest
+    container: seldonio/python-builder:0.8
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: lint-python
+      run: |
+        make -C python install_dev lint

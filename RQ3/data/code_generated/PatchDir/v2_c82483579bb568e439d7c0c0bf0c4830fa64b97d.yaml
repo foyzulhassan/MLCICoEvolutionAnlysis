@@ -1,0 +1,169 @@
+name: tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Run every Sunday
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+          cache: 'pip'
+          cache-dependency-path: requirements-dev/lint.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev/lint.txt
+
+      - name: Lint package
+        run: |
+          make lint
+
+  tests:
+    name: Test suite (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    needs: code-quality
+    runs-on: ${{ matrix.os }}
+    env:
+      DISTUTILS_USE_SDK: 1 # for MSVC compiler
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.8, 3.9]
+
+    steps:
+      - if: matrix.os == 'ubuntu-latest'
+        name: Maximize build space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 30000  # for pip packages in /tmp
+          remove-dotnet: true
+          remove-android: true
+
+      - uses: actions/checkout@v2
+
+      - name: Setup FFmpeg
+        uses: Iamshankhadeep/setup-ffmpeg@v1.1
+        with:
+          # Not strictly necessary, but it may prevent rate limit
+          # errors especially on GitHub-hosted macos machines.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "4.4"
+
+      - name: Configure Windows compilers
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[tests]
+
+      - name: Run tests
+        run: |
+          make tests
+
+      - name: Run densepose tests
+        env:
+          ZAMBA_RUN_DENSEPOSE_TESTS: 1
+        run: |
+          # torch is alread installed, so just add the densepose extra
+          pip install -e .[tests,densepose]
+          make densepose-tests
+
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true
+
+  test-install:
+    name: Test install from built distributions
+    needs: tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup FFmpeg
+        uses: Iamshankhadeep/setup-ffmpeg@v1.2
+        with:
+          # Not strictly necessary, but it may prevent rate limit
+          # errors especially on GitHub-hosted macos machines.
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "4.4"
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Build package
+        run: |
+          make dist
+
+      - name: Install wheel; test CLI + models with assets
+        run: |
+          python -m venv .venv-whl
+          PYTHON_BIN=bin/python
+          .venv-whl/$PYTHON_BIN -m pip install --upgrade pip
+          .venv-whl/$PYTHON_BIN -m pip install dist/zamba-*.whl
+          .venv-whl/$PYTHON_BIN -m zamba --help
+          .venv-whl/$PYTHON_BIN -c "from zamba.data.video import MegadetectorLiteYoloX; MegadetectorLiteYoloX()"
+
+      - name: Install source; test CLI + models with assets
+        run: |
+          python -m venv .venv-sdist
+          PYTHON_BIN=bin/python
+          .venv-sdist/$PYTHON_BIN -m pip install --upgrade pip
+          .venv-sdist/$PYTHON_BIN -m pip install dist/zamba-*.tar.gz
+          .venv-sdist/$PYTHON_BIN -m zamba --help
+          .venv-sdist/$PYTHON_BIN -c "from zamba.data.video import MegadetectorLiteYoloX; MegadetectorLiteYoloX()"
+
+  notify:
+    name: Notify failed build
+    needs: [code-quality, tests, test-install]
+    if: failure() && (github.event_name == 'push' || github.event_name == 'schedule')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: JasonEtco/create-an-issue@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_NAME: ${{ github.workflow }}
+          RUN_NUMBER: ${{ github.run_number}}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        with:
+          filename: .github/failed_build_issue_template.md

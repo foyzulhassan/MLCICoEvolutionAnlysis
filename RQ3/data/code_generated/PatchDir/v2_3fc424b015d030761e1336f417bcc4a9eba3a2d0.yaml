@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - developer
+      - master
+  pull_request:
+    branches:
+      - developer
+      - master
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 12
+        uses: actions/setup-java@v1
+        with:
+          java-version: 12
+
+      - name: Build with Maven
+        run: mvn clean install -DskipTests package --file ./backend/pom.xml
+
+  lint-backend:
+    needs: build-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: 12
+      - name: Lint Java Code
+        run: mvn checkstyle:checkstyle -Pcode-analysis --file ./backend/pom.xml
+
+  test-backend:
+    needs: lint-backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK 12
+        uses: actions/setup-java@v1
+        with:
+          java-version: 12
+
+      - name: Build with Maven
+        run: mvn verify --file ./backend/pom.xml
+
+  package-backend:
+    needs: test-backend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Push backend to GitHub repositories
+        uses: ./.github/actions/build-and-deploy
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          context: ./backend
+          tag: alex-backend
+
+  lint-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Lint TypeScript code
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: cd ./frontend && npm ci && npm run lint
+
+  package-frontend:
+    needs: lint-frontend
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Push frontend to GitHub repositories
+        uses: ./.github/actions/build-and-deploy
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          context: ./frontend
+          tag: alex-frontend
+
+  package-cli:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Push CLI to GitHub repositories
+        uses: ./.github/actions/build-and-deploy
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+          context: ./cli
+          tag: alex-cli

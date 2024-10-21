@@ -1,0 +1,16 @@
+name: Build Docker
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build Docker Image
+      run: |
+        docker build -t aics/pytorch_integrated_cell -f Dockerfile .
+    - name: Enter Docker Image
+      run: |
+        docker run --rm aics/pytorch_integrated_cell pytest --cov-report xml --cov=integrated_cell integrated_cell/tests/
+        codecov -t ${{ secrets.CODECOV_TOKEN }}

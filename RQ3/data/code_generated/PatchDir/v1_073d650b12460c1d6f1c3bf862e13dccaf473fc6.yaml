@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: dependencies
+      run: sudo apt-get install pkg-config liblbfgs-dev
+    - name: configure
+      run: |
+        autoreconf -f -i
+        ./configure
+    - name: make
+      run: make
+    - name: check
+      run: make check

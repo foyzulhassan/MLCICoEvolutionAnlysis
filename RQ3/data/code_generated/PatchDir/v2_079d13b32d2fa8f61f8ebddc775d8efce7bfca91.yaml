@@ -1,0 +1,23 @@
+name: shell test
+
+on: [push, pull_request]
+
+jobs:
+  shell_test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: shell_test
+      run: |
+        wget "https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz" && \
+        tar --xz -xvf "shellcheck-stable.linux.x86_64.tar.xz" && \
+        shellcheck() { "shellcheck-stable/shellcheck" "$@"; } && \
+        shellcheck --version && \
+        /bin/bash --version && /bin/bash -n bin/poseidon && shellcheck -x -e SC2016 -e SC2119 -e SC2129 -e SC2001 -e SC2038 -e SC2044 bin/poseidon
+    - name: e2e_test
+      run: |
+        docker system prune -a -f --volumes && pip3 install -U docker-compose && ./tests/test_e2e.sh

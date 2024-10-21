@@ -1,0 +1,21 @@
+name: Haskell CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: stack --no-terminal --install-ghc $ARGS test --bench --only-dependencies
+      # run: cabal install --only-dependencies --enable-tests
+    - name: Build
+      run: stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
+      # run: |
+      #   cabal configure --enable-tests
+      #   cabal build
+    # - name: Run tests
+    #   run: cabal test

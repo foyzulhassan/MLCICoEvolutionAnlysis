@@ -1,0 +1,23 @@
+name: Docker public.ecr.aws/lambda/dotnet:6.0
+
+on:
+  pull_request:
+    types: [synchronize, opened]
+
+env:
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+          
+      - name: docker build
+        run: |
+          cd docker/al2-dotnet6-opencv4.6.0
+          docker build -t shimat/al2-dotnet6-opencv4.6.0 .

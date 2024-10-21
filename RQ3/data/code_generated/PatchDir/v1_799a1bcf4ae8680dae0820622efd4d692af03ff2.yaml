@@ -1,0 +1,32 @@
+name: Build OS X
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Qt 5 + OpenCV
+        run: brew install qt@5 opencv
+
+      - name: Force link Qt
+        run: brew link qt@5 --force
+
+      - name: Run QMake
+        run: qmake -makefile -o Makefile DeepLabel.pro
+
+      - name: Run Make
+        run: make -j4
+
+      - name: Deploy
+        run: bash deploy_mac.sh ./release
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: osx-release
+          path: ./release/deeplabel.dmg

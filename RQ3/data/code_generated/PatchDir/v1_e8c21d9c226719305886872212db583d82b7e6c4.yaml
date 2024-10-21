@@ -1,0 +1,61 @@
+name: backend
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x, 13.x]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["@devmn/multi-select", "intelligo-cli", "neuro.js", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "@devmn/stepper", "@devmn/multi-select", "@devmn/multi-select", "@devmn/stepper", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "@devmn/charts", "@devmn/charts", "@devmn/charts", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["intelligo", "intelligo-cli", "neuro.js", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "@devmn/stepper", "intelligo-cli", "@devmn/stepper", "intelligo", "@devmn/stepper", "intelligo", "@devmn/stepper", "intelligo", "intelligo-cli", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/stepper", "@devmn/stepper", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "@devmn/charts", "@devmn/charts", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/charts", "intelligo", "@devmn/charts"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["intelligo", "intelligo-cli", "neuro.js", "intelligo-cli", "@devmn/charts", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "@devmn/stepper", "@devmn/charts", "intelligo-cli", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "@devmn/charts"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["intelligo", "intelligo-cli", "neuro.js", "intelligo-cli", "@devmn/charts", "@devmn/charts", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "@devmn/multi-select", "intelligo", "@devmn/stepper", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/stepper", "intelligo", "@devmn/stepper", "@devmn/stepper", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "@devmn/charts", "intelligo"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["@devmn/charts", "@devmn/event-manager", "neuro.js", "intelligo-cli", "intelligo", "@devmn/event-manager", "@devmn/charts", "intelligo-cli", "@devmn/image-viewer", "@devmn/charts", "@devmn/stepper", "intelligo-cli", "@devmn/multi-select", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/charts", "@devmn/charts", "intelligo"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["@devmn/multi-select", "intelligo-cli", "neuro.js", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "@devmn/stepper", "@devmn/multi-select", "@devmn/multi-select", "@devmn/stepper", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "@devmn/charts", "@devmn/charts", "@devmn/charts", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["intelligo", "intelligo-cli", "neuro.js", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "@devmn/stepper", "intelligo-cli", "@devmn/stepper", "intelligo", "@devmn/stepper", "intelligo", "@devmn/stepper", "intelligo", "intelligo-cli", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/stepper", "@devmn/stepper", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "@devmn/charts", "@devmn/charts", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/charts", "intelligo", "@devmn/charts"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["intelligo", "intelligo-cli", "neuro.js", "intelligo-cli", "@devmn/charts", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "@devmn/stepper", "@devmn/charts", "intelligo-cli", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "@devmn/charts"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["intelligo", "intelligo-cli", "neuro.js", "intelligo-cli", "@devmn/charts", "@devmn/charts", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "@devmn/multi-select", "intelligo", "@devmn/stepper", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/stepper", "intelligo", "@devmn/stepper", "@devmn/stepper", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "@devmn/charts", "intelligo"]'
+      - uses: intelligo-systems/intelligo-actions@v1
+        with:
+          packages: '["@devmn/charts", "@devmn/event-manager", "neuro.js", "intelligo-cli", "intelligo", "@devmn/event-manager", "@devmn/charts", "intelligo-cli", "@devmn/image-viewer", "@devmn/charts", "@devmn/stepper", "intelligo-cli", "@devmn/multi-select", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "@devmn/stepper", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo", "intelligo-cli", "intelligo", "intelligo", "intelligo" , "intelligo", "intelligo", "intelligo", "intelligo-cli", "@devmn/charts", "@devmn/charts", "intelligo"]'
+      - uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-  
+      - name: npm install, build, and test
+        run: |
+          npm ci
+          npm run build --if-present
+          npm test
+        env:
+          CI: true

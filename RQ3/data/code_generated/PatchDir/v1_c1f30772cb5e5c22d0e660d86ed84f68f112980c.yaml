@@ -1,0 +1,74 @@
+name: tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - hoomd: 2.9.2
+            tensorflow: 2.4.1
+            tbb-devel: 2020.1
+            md-analysis: 'true'
+          - hoomd: 2.9.2
+            tensorflow: 2.3.2
+            tbb-devel: 2020.1
+            md-analysis: 'true'
+          - hoomd: 2.9.2
+            tensorflow: 2.3.2
+            tbb-devel: 2020.1
+            md-analysis: 'false'
+          - hoomd: 2.8.2
+            tensorflow: 2.3.2
+            tbb-devel: 2020.1
+            md-analysis: 'false'
+          - hoomd: 2.7.0
+            tensorflow: 2.3.2
+            tbb-devel: 2019.8
+            md-analysis: 'false'
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: s-weigand/setup-conda@v1.0.5
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        # Install testing dependencies
+        pip install pytest-cov pytest-xdist jupyter notebook matplotlib gsd scipy
+
+        # Install software dependencies
+        pip install tensorflow==${{ matrix.tensorflow }}
+        conda install -c conda-forge tbb-devel==${{ matrix.tbb-devel }} hoomd==${{ matrix.hoomd }}
+    - name: MDAnalysis Install
+      if: matrix.md-analysis == 'true'
+      run: |
+          pip install MDAnalysis
+    - name: Download and install HTF
+      run: |
+        mkdir build && cd build
+        CXX=g++ CC=gcc CMAKE_PREFIX_PATH=/usr/share/miniconda cmake ..
+        make install
+        cd ..
+    - name: Run tests
+      run: |
+        pytest -v --forked
+    - name: Run notebooks with MDAnalysis
+      if: matrix.md-analysis == 'true'
+      run: |
+        jupyter nbconvert --ExecutePreprocessor.timeout=-1 --execute "examples/*.ipynb" --to notebook --output-dir='temp' --clear-output --Application.log_level='ERROR'
+        rm -rf temp
+    - name: Run notebooks without MDAnalysis
+      if: matrix.md-analysis == 'false'
+      run: |
+        cd examples
+        jupyter nbconvert --ExecutePreprocessor.timeout=-1 --execute "01. Quickstart.ipynb" "02. Preparing Coarse-grained Mapped Simulation.ipynb" "03. Experiment Directed Simulations.ipynb" "04. Particle Simulations.ipynb" "07. Molecules CG Mapping.ipynb" --to notebook --clear-output --output-dir='temp' --Application.log_level='ERROR'
+        rm -rf temp

@@ -1,0 +1,52 @@
+name: docker_build_and_k8s_deployment
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches:
+      - master
+      - 'release/**'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+      # Set the target AKS cluster.
+    environment:
+      name: QA-environment
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v2
+
+      - name: AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # change as needed
+          
+      - name: delete old deployment
+        uses: kodermax/kubectl-aws-eks@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: delete -f manifests/wordpress-deployment.yml,manifests/wordpress-mysql-deployment.yml
+
+      - name: Deploy new package
+        uses: kodermax/kubectl-aws-eks@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: apply -f manifests/wordpress-deployment.yml,manifests/wordpress-mysql-deployment.yml,manifests/wordpress-ingress.yml
+
+      - name: Deploy new package
+        uses: kodermax/kubectl-aws-eks@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+        with:
+          args: rollout status deployment/qa-qa-wordpress-44,deployment/qa-qa-wordpress-47,deployment/qa-qa-wordpress-50,deployment/qa-qa-wordpress-54,deployment/qa-qa-wordpress-55,deployment/qa-qa-wordpress-56,deployment/qa-qa-wordpress-57,deployment/qa-qa-wordpress-58,deployment/qa-qa-wordpress-59

@@ -1,0 +1,69 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { BACKEND: torch, BACKEND_VER: 2.4.0, PAPER_MODELS: true, ALLOW_FAILURE: false }
+          - { BACKEND: torch, BACKEND_VER: 2.4.0, PAPER_MODELS: false, ALLOW_FAILURE: false }
+          - { BACKEND: tensorflow, BACKEND_VER: 2.17.0, PAPER_MODELS: true, ALLOW_FAILURE: false }
+          - { BACKEND: tensorflow, BACKEND_VER: 2.17.0, PAPER_MODELS: false, ALLOW_FAILURE: false }
+          - { BACKEND: jax, BACKEND_VER: 0.4.30, PAPER_MODELS: true, ALLOW_FAILURE: true }
+          - { BACKEND: jax, BACKEND_VER: 0.4.30, PAPER_MODELS: false, ALLOW_FAILURE: true }
+    env:
+      SDSS_LOCAL_SAS_MIRROR: ./ci_data/
+      GAIA_TOOLS_DATA: ./ci_data/
+      LASMOT_DR5_DATA: ./ci_data/
+      KERAS_BACKEND: ${{ matrix.BACKEND }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'  # caching pip dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt install graphviz
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install ${{ matrix.BACKEND }}~=${{ matrix.BACKEND_VER }}
+          pip install .
+      - name: Cache test data
+        uses: actions/cache@v4
+        with:
+          path: ${{github.workspace}}/ci_data/
+          key: astronn-${{ runner.os }}-${{ matrix.BACKEND_VER }}-${{ matrix.PAPER_MODELS }}-2024july22
+      - name: Test astroNN
+        continue-on-error: ${{ matrix.ALLOW_FAILURE }}
+        if: ${{ matrix.PAPER_MODELS == false}}
+        # Run almost all tests for latest config
+        run: >
+          python -m pytest -v --cov astroNN --doctest-glob="*.rst" --junitxml=junit.xml tests/test_numpy_tools.py tests/test_loss_func.py
+          tests/test_layers.py tests/test_apogee_tools.py tests/test_datasets.py tests/test_gaia_tools.py
+          tests/test_lamost_tools.py tests/test_models.py tests/test_utilities.py tests/test_neuralODE.py
+      # Run papers models test
+      - name: Test paper models
+        continue-on-error: ${{ matrix.ALLOW_FAILURE }}
+        if: ${{ matrix.PAPER_MODELS == true}}
+        run: >
+          python -m pytest -v --cov astroNN --doctest-glob="*.rst" --junitxml=junit.xml tests/test_apogee_model.py tests/test_paper_models.py
+      - name: Upload coverage reports to Codecov
+        continue-on-error: ${{ matrix.ALLOW_FAILURE }}
+        uses: codecov/codecov-action@v4
+        env:
+          BACKEND: ${{ matrix.BACKEND }}
+          BACKEND_VER: ${{ matrix.BACKEND_VER }}
+          PAPER_MODELS: ${{ matrix.PAPER_MODELS }}
+        with:
+          flags: unittests
+          env_vars: BACKEND, BACKEND_VER, PAPER_MODELS
+          name: codecov-astroNN
+          fail_ci_if_error: true
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}

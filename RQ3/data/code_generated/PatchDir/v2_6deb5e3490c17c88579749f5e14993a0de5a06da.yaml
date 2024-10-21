@@ -1,0 +1,48 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Python package
+
+on:
+  push:
+    branches: [ $default-branch, develop, update-package-config ]
+  pull_request:
+    branches: [ $default-branch, develop ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install .
+        pip install .[dev]
+    - name: Set up language data
+      run: |
+        python -m spacy download en_core_web_sm
+        python -m spacy link en_core_web_sm en
+        python -m spacy download es_core_news_sm
+        python -m spacy link es_core_news_sm es
+        python -m spacy validate
+        python -m textacy download capitol_words
+        python -m textacy download lang_identifier
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings
+        flake8 . --count --exit-zero --statistics
+    - name: Test with pytest
+      run: |
+        python -m pytest tests -v --cov=textacy --cov-report=term-missing

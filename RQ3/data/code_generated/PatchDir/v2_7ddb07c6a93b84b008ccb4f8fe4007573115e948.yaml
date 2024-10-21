@@ -1,0 +1,53 @@
+on:
+  push:
+    branches: [master,github-actions-test]
+  pull_request:
+    branches: [master]
+
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+        geomstats-backend : ['numpy','pytorch','tensorflow']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build using Python ${{matrix.python-version}} and Backend ${{matrix.geomstats-backend}}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{matrix.python-version}}
+
+      - name: install pandoc [apt-get] (not installing with pip)
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install pandoc
+          
+      - name: install dependencies [pip]
+        run:  |
+          for req in ci-requirements.txt dev-requirements.txt opt-requirements.txt requirements.txt; do 
+          pip install -q -r $req 
+          done    
+          pip install -e .      
+
+      - name: linting [flake8]
+        run: |
+          flake8 --ignore=D,W503,W504 geomstats examples tests
+          flake8 geomstats/geometry geomstats/learning 
+
+      - name: unit testing [nose2]
+        if: ${{ matrix.geomstats-backend != 'tensorflow' }}   
+        run: |
+          nose2 --with-coverage tests
+          
+      - name: generating code coverage 
+        run: |
+          bash <(curl -s https://codecov.io/bash) -c -F $${{matrix.geomstats-backend}}
+          
+      - name: building docs [sphinx]
+        if:  ${{ matrix.geomstats-backend == 'pytorch' }}
+        run: |
+          sphinx-build -b html -D version=latest -D release=latest docs docs/_build

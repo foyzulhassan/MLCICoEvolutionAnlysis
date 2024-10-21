@@ -1,0 +1,86 @@
+name: Test Suite Windows
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  schedule:
+    - cron:  '0 23 * * *'
+  push:
+    tags:
+      - '*'
+    branches:  #TODO: remove
+      - '*'
+
+defaults:
+  run:
+    shell: msys2 {0}
+
+jobs:
+  cleanup-runs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: rokroskar/workflow-run-cleanup-action@master
+      env:
+        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  build:
+    needs: cleanup-runs
+    if: ${{ github.event_name == 'push' || github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'test distribution') || contains(github.event.pull_request.labels.*.name, 'test suite') }}
+    strategy:
+      matrix:
+        os: [windows-2019]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        update: true
+    - uses: actions/checkout@v2
+      with:
+         submodules: true
+    - name: Install Webots Compilation Dependencies
+      run: |
+        echo '-----'
+        ls "/C/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise"
+        echo '-----'
+        ls "/C/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC"
+        echo '-----'
+        ls "/C/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/bin"
+        echo '-----'
+        ls "/C/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7"
+        echo '-----'
+        ls "/C/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/Common7/IDE"
+        echo '-----'
+        echo 'export JAVA_HOME=/C/Program\ Files/Java/jdk1.8.0_265' >> ~/.bash_profile
+        echo 'export PYTHON27_HOME=/C/hostedtoolcache/windows/Python/2.7.18/x64' >> ~/.bash_profile
+        echo 'export PYTHON37_HOME=/C/hostedtoolcache/windows/Python/3.7.9/x64' >> ~/.bash_profile
+        echo 'export PYTHON38_HOME=/C/hostedtoolcache/windows/Python/3.8.6/x64' >> ~/.bash_profile
+        echo 'export PYTHON39_HOME=/C/hostedtoolcache/windows/Python/3.9.0/x64' >> ~/.bash_profile
+        echo 'export VISUAL_STUDIO_PATH="/C/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise"' >> ~/.bash_profile
+        echo 'export INNO_SETUP_HOME="/C/Program Files (x86)/Inno Setup 6"' >> ~/.bash_profile
+        cat scripts/install/bash_profile.windows >> ~/.bash_profile
+        ./scripts/install/msys64_installer.sh --all
+    - name: Set Commit SHA in Version
+      if: ${{ github.event_name == 'schedule' }}
+      run: python scripts/packaging/set_commit_and_date_in_version.py ${{ github.sha }}
+    - name: Webots Package Creation
+      run: |
+        export WEBOTS_HOME=$GITHUB_WORKSPACE
+        make distrib -j4
+    - uses: actions/upload-artifact@v2
+      with:
+        name: build-${{ matrix.os }}
+        path: |
+          distribution/*.exe
+  test-suite:
+    needs: build
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'test suite') }}
+    strategy:
+      matrix:
+        os: [windows-2019]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download Artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: build-${{ matrix.os }}
+        path: artifact

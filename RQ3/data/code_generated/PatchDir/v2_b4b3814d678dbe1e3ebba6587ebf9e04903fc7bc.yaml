@@ -1,0 +1,52 @@
+name: Build Windows
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Qt 5
+        run: choco install qt5-default --confirm -r --no-progress
+
+      - name: Install OpenCV
+        run: >
+           $install_path=Resolve-Path ./;
+           choco install opencv --confirm -r --no-progress --params="'/InstallationPath:$install_path'"
+
+      - name: Clone protobuf
+        run: git clone https://github.com/protocolbuffers/protobuf
+
+      - name: Install protobuf
+        run: >
+          cd protobuf/cmake;
+          mkdir build;
+          cd build;
+          $install_path=Resolve-Path ../../;
+          cmake ..
+          -Dprotobuf_BUILD_SHARED_LIBS=ON
+          -Dprotobuf_BUILD_EXAMPLES=OFF
+          -Dprotobuf_BUILD_TESTS=OFF
+          -Dprotobuf_WITH_ZLIB=ON
+          -Dprotobuf_BUILD_PROTOC_BINARIES=ON
+          -DCMAKE_INSTALL_PREFIX="$install_path";
+          cmake --build . --parallel 4 --target install
+
+      - name: Compile protobuf messages
+        run: ./protobuf/bin/protoc.exe --proto_path ./src/proto --cpp_out ./src/proto feature.proto example.proto
+
+      - name: Run QMake
+        run: C:/Qt/5.15.2/mingw81_64/bin/qmake.exe -makefile -o Makefile DeepLabel.pro
+
+      - name: Run Make
+        run: nmake -j4
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux-release
+          path: ./release/deeplabel

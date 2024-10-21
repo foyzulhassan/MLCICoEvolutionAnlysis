@@ -1,0 +1,19 @@
+name: V1 Executor Lint
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  executor-lint:
+
+    runs-on: ubuntu-latest
+    container: seldonio/core-builder:0.27
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: test-executor
+      run: |
+        make -C executor lint

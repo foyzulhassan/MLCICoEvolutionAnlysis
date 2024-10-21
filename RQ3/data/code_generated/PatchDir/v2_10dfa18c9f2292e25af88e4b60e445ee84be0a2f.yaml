@@ -1,0 +1,71 @@
+name: .NET
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths: 
+      - 'binding/dotnet/**'
+      - '!binding/dotnet/README.md'
+      - 'lib/beaglebone/**'
+      - 'lib/common/**'
+      - 'lib/linux/**'
+      - 'lib/jetson/**'
+      - 'lib/mac/**'
+      - 'lib/raspberry-pi/**'
+      - 'lib/windows/**'
+      - 'resources/keyword_files/beaglebone/**'      
+      - 'resources/keyword_files/jetson/**'
+      - 'resources/keyword_files/linux/**'
+      - 'resources/keyword_files/mac/**'
+      - 'resources/keyword_files/raspberry-pi/**'
+      - 'resources/keyword_files/windows/**'
+            
+  pull_request:
+    branches: [ master ]
+    paths: 
+      - 'binding/dotnet/**'
+      - '!binding/dotnet/README.md'
+      - 'lib/beaglebone/**'
+      - 'lib/common/**'
+      - 'lib/linux/**'
+      - 'lib/jetson/**'
+      - 'lib/mac/**'
+      - 'lib/raspberry-pi/**'
+      - 'lib/windows/**'
+      - 'resources/keyword_files/beaglebone/**'      
+      - 'resources/keyword_files/jetson/**'
+      - 'resources/keyword_files/linux/**'
+      - 'resources/keyword_files/mac/**'
+      - 'resources/keyword_files/raspberry-pi/**'
+      - 'resources/keyword_files/windows/**'
+
+defaults:
+  run:
+    working-directory: binding/dotnet
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+
+    - name: Setup .NET 5.0
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore    
+
+    - name: Build
+      run: dotnet build --no-restore      
+
+    - name: Test
+      run: dotnet test -- TestRunParameters.Parameter\(name=\"pvTestAccessKey\",\ value=\"${{secrets.PV_VALID_ACCESS_KEY}}\"\)

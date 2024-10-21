@@ -1,0 +1,41 @@
+name: Upload
+on:
+  release:
+    types: [published]
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Run Forest Quilc
+        run: docker run --rm -d -p 5555:5555 rigetti/quilc:1.22.0 -R
+
+      - name: Run Forest QVM
+        run: docker run --rm -d -p 5000:5000 rigetti/qvm -S
+
+      - name: Build and install Plugin
+        run: |
+          python -m pip install --upgrade pip wheel
+          python setup.py bdist_wheel
+          pip install dist/PennyLane*.whl
+
+      - name: Install test dependencies
+        run: |
+          pip install wheel pytest pytest-cov pytest-mock flaky --upgrade
+
+      - name: Run tests
+        run: |
+          python -m pytest tests --tb=native
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI }}

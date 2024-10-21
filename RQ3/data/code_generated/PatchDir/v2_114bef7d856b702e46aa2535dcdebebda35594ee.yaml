@@ -1,0 +1,35 @@
+name: CI pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    container:
+      image: dart:stable
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Print Dart SDK version
+        run: dart --version
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: dart analyze --no-fatal-warnings
+
+      - name: Run tests
+        run: dart test
+
+      - name: Run e2e tests
+        run: dart pub run test e2e -p vm

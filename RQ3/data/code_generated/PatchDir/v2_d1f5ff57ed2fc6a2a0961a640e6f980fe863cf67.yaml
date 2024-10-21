@@ -1,0 +1,41 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-cli-to-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+          registry-url: https://registry.npmjs.org/
+
+      - name: Publish CLI
+        run: cd cli && npm ci && npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+
+  tag-docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Tag latest images with release version
+        run: |
+          VERSION="2.1.1"
+          IMAGES="alex-frontend alex-backend alex-cli alex-docs"
+
+          for img in $IMAGES
+          do
+            echo "ghcr.io/learnlib/alex/$img:$VERSION"
+            docker pull "ghcr.io/learnlib/alex/$img:latest"
+            docker tag "ghcr.io/learnlib/alex/$img:latest" "ghcr.io/learnlib/alex/$img:$VERSION"
+            docker push "ghcr.io/learnlib/alex/$img:$VERSION"
+          done
