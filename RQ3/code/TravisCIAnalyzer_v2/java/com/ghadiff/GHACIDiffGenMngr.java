@@ -153,24 +153,24 @@ public TravisCIChangeBlocks ghaCIDiffGenerate(List<MLCommitDiffInfo> mlDiffInfo,
 public List<String> getCmdListFromChange(String changeblock, String changestr) {
 
     // Define GitHub Actions blocks to track (no direct 'before_script' in GitHub Actions)
-    List<String> allowedBlocks = new ArrayList<>();
+//    List<String> allowedBlocks = new ArrayList<>();
 
     // Common sections of GitHub Actions workflows
-    allowedBlocks.add("jobs");
-    allowedBlocks.add("steps");
-    allowedBlocks.add("run");
-    allowedBlocks.add("on");
-    allowedBlocks.add("name");
-    allowedBlocks.add("uses");
-    allowedBlocks.add("env");
-    allowedBlocks.add("permissions");
-    allowedBlocks.add("if");
-    allowedBlocks.add("with");
-    allowedBlocks.add("secrets");
-    allowedBlocks.add("strategy");
-    allowedBlocks.add("matrix");
-    allowedBlocks.add("timeout-minutes");
-    allowedBlocks.add("continue-on-error");
+//    allowedBlocks.add("jobs");
+//    allowedBlocks.add("steps");
+//    allowedBlocks.add("run");
+//    allowedBlocks.add("on");
+//    allowedBlocks.add("name");
+//    allowedBlocks.add("uses");
+//    allowedBlocks.add("env");
+//    allowedBlocks.add("permissions");
+//    allowedBlocks.add("if");
+//    allowedBlocks.add("with");
+//    allowedBlocks.add("secrets");
+//    allowedBlocks.add("strategy");
+//    allowedBlocks.add("matrix");
+//    allowedBlocks.add("timeout-minutes");
+//    allowedBlocks.add("continue-on-error");
 
     String str = changestr.trim();
 
@@ -178,6 +178,20 @@ public List<String> getCmdListFromChange(String changeblock, String changestr) {
     if (str.startsWith("name:")) {
         str = str.replace("name:", "").trim();
     }
+    if (str.startsWith("run-name:")) {
+        str = str.replace("run-name:", "").trim();
+    }
+    if (str.startsWith("env:")) {
+        str = str.replace("env:", "").trim();
+    }
+    if (str.startsWith("defaults:")) {
+        str = str.replace("defaults:", "").trim();
+    }
+
+    if (str.startsWith("concurrent:")) {
+        str = str.replace("concurrent:", "").trim();
+    }
+
     if (str.startsWith("jobs:")) {
         str = str.replace("jobs:", "").trim();
     }
@@ -214,12 +228,12 @@ public List<String> getCmdListFromChange(String changeblock, String changestr) {
     if (str.startsWith("matrix:")) {
         str = str.replace("matrix:", "").trim();
     }
-    if (str.startsWith("timeout-minutes:")) {
-        str = str.replace("timeout-minutes:", "").trim();
-    }
-    if (str.startsWith("continue-on-error:")) {
-        str = str.replace("continue-on-error:", "").trim();
-    }
+//    if (str.startsWith("timeout-minutes:")) {
+//        str = str.replace("timeout-minutes:", "").trim();
+//    }
+//    if (str.startsWith("continue-on-error:")) {
+//        str = str.replace("continue-on-error:", "").trim();
+//    }
 
     // Normalize certain commands, for instance converting 'pip3' to 'pip'
     if (str.equals("pip3")) {
@@ -243,8 +257,8 @@ public void generateStatOnChangeBlock(TravisCIChangeBlocks changeblocks) {  // R
     Writer outputFileWriter = null;
 
     // Update file paths to reflect GHA analysis
-    String statsFile = "C:\\paper\\co_evolution_analysis\\RQ3\\data\\code_generated\\gha_output_statistical_analysis_expanded_keys_total_keys_stats.csv";
-    String outputFile = "C:\\paper\\co_evolution_analysis\\RQ3\\data\\code_generated\\gha_output_statistical_analysis_expanded_keys_v3.csv";
+    String statsFile = Config.rootDir+"gha_output_statistical_analysis_expanded_keys_total_keys_stats.csv";
+    String outputFile = Config.rootDir+"\\gha_output_statistical_analysis_expanded_keys_v3.csv";
     
     CSVWriter outputFileCsvWriter = null;
     CSVWriter statsFileCsvWriter = null;

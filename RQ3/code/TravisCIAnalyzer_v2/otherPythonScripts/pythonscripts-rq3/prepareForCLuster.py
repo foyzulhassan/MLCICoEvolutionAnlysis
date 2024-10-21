@@ -2,7 +2,7 @@ import csv
 from collections import Counter
 import re
 #read csv file in ../chris-analysis/Output/
-with open("/home/alaa/Research/Thesis/chris-analysis/output_satistical_analysis_expanded_keys_v3.csv", "r") as f:
+with open("C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\gha_output_statistical_analysis_expanded_keys_v3.csv", "r", encoding="utf-8") as f:
     reader = csv.reader(f)
     #skip header
     next(reader)
@@ -10,9 +10,9 @@ with open("/home/alaa/Research/Thesis/chris-analysis/output_satistical_analysis_
     listOfCommands = list(reader)
 
 
-lifecyleKeys=['script','install','before_install','after_install','after_success','before_script','deploy','before_deploy'
-              ,'after_deploy','after_failure','before_failure','after_script','before_script','before_cache','after_deploy',
-              'after_sucess']
+# lifecyleKeys=['script','install','before_install','after_install','after_success','before_script','deploy','before_deploy'
+#               ,'after_deploy','after_failure','before_failure','after_script','before_script','before_cache','after_deploy',
+#               'after_sucess']
 normalizedData=[]
 for elem in listOfCommands:
     temp=[]

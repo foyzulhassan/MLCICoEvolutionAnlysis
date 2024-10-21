@@ -60,6 +60,6 @@ for elem in listOfCommands:
 most_common_commands = Counter(newListOfCommands).most_common(200)
 
 #write result to most_frequent_env_map_changes.csv
-with open('most_frequent_command_changes_expanded_v3.csv', 'w') as f:
+with open('most_frequent_command_changes_expanded_v3_2.csv', 'w') as f:
     writer = csv.writer(f)
     writer.writerows(most_common_commands)

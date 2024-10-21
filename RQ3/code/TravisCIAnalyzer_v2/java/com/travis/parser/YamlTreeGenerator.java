@@ -49,7 +49,8 @@ import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.tree.TreeContext;
 
-@Register(id = "yaml-snakeyaml", accept = {"\\.yml$", "\\.yaml$"}, priority = Registry.Priority.MAXIMUM)
+@Register(id = "yaml-snakeyaml", accept = {"\\.yml$", "\\.yaml$"},
+        priority = Registry.Priority.MAXIMUM)
 public class YamlTreeGenerator extends TreeGenerator {
     @Override
     public TreeContext generate(Reader r) throws IOException {
