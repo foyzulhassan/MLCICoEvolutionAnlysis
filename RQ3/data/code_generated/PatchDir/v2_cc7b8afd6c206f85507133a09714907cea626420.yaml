@@ -1,0 +1,62 @@
+name: CI
+
+on: [push]
+
+jobs:
+  test:
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"  # respect [ci skip] commit
+    runs-on: ubuntu-latest
+    env:
+      SDSS_LOCAL_SAS_MIRROR: ./
+      GAIA_TOOLS_DATA: ./
+      LASMOT_DR5_DATA: ./
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { TF_VER: 2.11.0, TFP_VER: 0.19.0, PAPER_MODELS: true, ALLOW_FAILURE: false }
+          - { TF_VER: 2.11.0, TFP_VER: 0.19.0, PAPER_MODELS: false, ALLOW_FAILURE: false }
+          - { TF_VER: 2.10.1, TFP_VER: 0.18.0, PAPER_MODELS: true, ALLOW_FAILURE: false }
+          - { TF_VER: 2.10.1, TFP_VER: 0.18.0, PAPER_MODELS: false, ALLOW_FAILURE: false }
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+      - name: Install dependencies
+        run: |
+          pip install tensorflow==${{ matrix.TF_VER }}
+          pip install tensorflow-probability==${{ matrix.TFP_VER }}
+          pip install coveralls pydot graphviz pytest pytest-cov
+          python setup.py install
+          python -c "from astroNN.config import tf_patch; tf_patch()"
+      - name: Test astroNN
+        continue-on-error: ${{ matrix.ALLOW_FAILURE }}
+        if: ${{ matrix.PAPER_MODELS == false}}
+        # Run almost all tests for latest config
+        run: >
+          python -m pytest --cov astroNN --cov-report=xml tests/test_numpy_tools.py tests/test_loss_func.py
+          tests/test_layers.py tests/test_apogee_tools.py tests/test_datasets.py tests/test_gaia_tools.py
+          tests/test_lamost_tools.py tests/test_models.py tests/test_utilities.py tests/test_neuralODE.py
+          --disable-pytest-warnings
+      # Run papers models test
+      - name: Test paper models
+        continue-on-error: ${{ matrix.ALLOW_FAILURE }}
+        if: ${{ matrix.PAPER_MODELS == true}}
+        run: >
+          python -m pytest --cov astroNN --cov-report=xml tests/test_apogee_model.py tests/test_paper_models.py
+          --disable-pytest-warnings
+      - name: Upload coverage reports to Codecov
+        continue-on-error: ${{ matrix.ALLOW_FAILURE }}
+        uses: codecov/codecov-action@v3
+        env:
+          TF_VER: ${{ matrix.TF_VER }}
+          TFP_VER: ${{ matrix.TFP_VER }}
+          PAPER_MODELS: ${{ matrix.PAPER_MODELS }}
+        with:
+          flags: unittests
+          env_vars: TF_VER, TFP_VER, PAPER_MODELS
+          name: codecov-astroNN
+          fail_ci_if_error: true
+          verbose: true

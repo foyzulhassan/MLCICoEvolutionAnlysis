@@ -1,0 +1,75 @@
+name: CI Mac OS X 10.15
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: macos-10.15
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+          architecture: x64
+          python-version: '3.8'
+          # must be explicitly specified if architecture is not x64:
+          miniconda-version: latest
+    - run: |
+          conda create -qyf py36 python=3.6 wheel -c anaconda
+          conda activate py36
+          python setup.py sdist bdist_wheel
+      shell: bash -l {0}
+        
+    - name: Install dependencies
+      run: |
+        brew install openslide libomp
+        pip3 install numpy==1.19.5
+
+    - name: Configure CMake
+      run: |
+        cmake -B ${{github.workspace}}/build \
+            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}\
+            -DFAST_MODULE_OpenVINO=OFF \
+            -DFAST_MODULE_Dicom=ON \
+            -DFAST_MODULE_WholeSlideImaging=ON \
+            -DFAST_MODULE_OpenIGTLink=ON \
+            -DFAST_MODULE_Clarius=OFF \
+            -DFAST_MODULE_TensorFlow=OFF \
+            -DFAST_MODULE_HDF5=ON \
+            -DFAST_MODULE_Plotting=OFF \
+            -DFAST_MODULE_Python=ON \
+            -DFAST_MODULE_RealSense=OFF \
+            -DFAST_BUILD_EXAMPLES=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j 4
+
+    - name: Build Python wheel
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target python-wheel -j 4
+
+    - name: Package
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target package -j 4
+
+    - name: Upload archive package
+      uses: actions/upload-artifact@v2
+      with:
+        name: Archive package (tar.xz)
+        path: ${{github.workspace}}/build/fast_*.tar.xz
+        if-no-files-found: error
+
+    - name: Upload Python wheel
+      uses: actions/upload-artifact@v2
+      with:
+        name: Python wheel
+        path: ${{github.workspace}}/build/python/dist/pyFAST-*.whl
+        if-no-files-found: error
+
+    - name: System Check
+      run: ${{github.workspace}}/build/systemCheck

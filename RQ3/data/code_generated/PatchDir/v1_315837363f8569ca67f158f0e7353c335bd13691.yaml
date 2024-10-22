@@ -1,0 +1,26 @@
+name: Build dist and wheels
+
+on:
+  release:
+    types:
+      - published
+jobs:
+  build_wheels:
+    name: ubuntu-latest
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Build wheel
+      run: |
+        pip wheel -w wheelhouse/ .
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: wheels
+        path: ./wheelhouse

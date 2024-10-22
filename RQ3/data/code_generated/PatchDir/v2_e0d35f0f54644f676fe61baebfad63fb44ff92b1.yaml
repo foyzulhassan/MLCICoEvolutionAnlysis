@@ -1,0 +1,35 @@
+name: tests
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+  pull_request:
+    branches: 
+      - main
+      - develop-21.11
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements/pandas-requirements.txt ]; then pip install -r requirements/pandas-requirements.txt; fi
+          if [ -f requirements/dask-requirements.txt ]; then pip install -r requirements/dask-requirements.txt; fi
+          if [ -f requirements/api-requirements.txt ]; then pip install -r requirements/api-requirements.txt; fi
+      - name: Test with unittest
+        run: |
+          python -m unittest

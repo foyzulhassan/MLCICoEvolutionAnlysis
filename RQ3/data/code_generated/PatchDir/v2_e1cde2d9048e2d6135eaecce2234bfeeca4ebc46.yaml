@@ -1,0 +1,29 @@
+name: unit-tests
+
+on: [pull_request]
+
+jobs:
+  ubuntu:
+    strategy:
+      matrix:
+        python: [3.8]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python }}
+    - name: Install dependencies
+      run: |
+        pip3 freeze
+    - name: Cache datasets
+      uses: actions/cache@v2
+      with:
+        path: ~/river_data
+    - name: Download datasets
+      run: python -c "from river import datasets; datasets.CreditCard().download()"
+    - name: pytest
+      run: pytest --cov=river -m "not datasets"
+    - name: codecov
+      run: codecov

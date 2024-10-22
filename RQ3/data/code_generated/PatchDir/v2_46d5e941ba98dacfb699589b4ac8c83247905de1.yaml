@@ -1,0 +1,16 @@
+name: wordpress.org
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  wordpress:
+    name: readme.txt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Publish
+        run: ./.github/workflows/publish-readme.sh

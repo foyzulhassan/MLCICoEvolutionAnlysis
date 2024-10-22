@@ -1,0 +1,38 @@
+name: test-core
+on: [push, pull_request]
+jobs:
+  lint-python:
+    name: lint-python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: |
+          pip install .[dev]
+      - name: Lint Python
+        run: |
+          ruff check .
+  test-asreview-core:
+    name: test-asreview-core
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.8", "3.12"]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install packages
+        run: |
+          pip install pytest
+          pip install --no-cache-dir .[test]
+          pip install --no-cache-dir .
+      - name: Run test suite with pytest
+        run: |
+          pytest tests/

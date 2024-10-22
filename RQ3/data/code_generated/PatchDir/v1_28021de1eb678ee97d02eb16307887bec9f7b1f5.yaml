@@ -1,0 +1,20 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: pip install mike
+      - run: pip install mkdocs-material
+      - run: pip install mkdocs-git-revision-date-plugin
+      - run: mike set-default latest
+      - run: mike deploy --push --update-aliases 0.x latest

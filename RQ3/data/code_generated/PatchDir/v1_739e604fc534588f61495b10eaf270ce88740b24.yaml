@@ -1,0 +1,62 @@
+name: Windows Server 2019
+
+on:
+  pull_request:
+    types: [synchronize, opened]
+
+jobs:
+  build:
+
+    runs-on: windows-2019
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
+      - name: Install Server-Media-Foundation
+        shell: powershell
+        run: |
+          Install-WindowsFeature Server-Media-Foundation
+
+      - name: Cache OpenCV binaries
+        id: cache_opencv
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/opencv_files
+          key: opencv-4.5.0-rev1
+
+      - name: Download OpenCV binaries 
+        if: steps.cache_opencv.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          . ".\download_opencv_windows.ps1"
+
+      - name: Cache Tesseract binaries
+        id: cache_tesseract
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/tesseract_files
+          key: tesseract-rev1
+
+      - name: Download Tesseract binaries 
+        if: steps.cache_tesseract.outputs.cache-hit != 'true'
+        shell: powershell
+        run: |
+          . ".\download_tesseract_windows.ps1"
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Build x64
+        shell: cmd
+        run: msbuild OpenCvSharp.sln /t:build /p:configuration=Release /p:platform=x64 -maxcpucount
+
+      - name: Build x86
+        shell: cmd
+        run: msbuild OpenCvSharp.sln /t:build /p:configuration=Release /p:platform=x86 -maxcpucount
+
+      - name: Build ARM
+        shell: cmd
+        run: msbuild OpenCvSharp.sln /t:build /p:configuration=Release /p:platform=ARM -maxcpucount

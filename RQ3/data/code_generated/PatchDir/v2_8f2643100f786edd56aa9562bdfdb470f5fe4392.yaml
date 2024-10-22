@@ -1,0 +1,14 @@
+name: 'ROOT 6.30'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '31 12 * * *'
+
+jobs:
+  call-workflow-passing-data:
+    uses: root-project/root/.github/workflows/root-ci.yml@master
+    with:
+      head_ref: 'v6-30-00-patches'
+      base_ref: 'v6-30-00-patches'
+    secrets: inherit

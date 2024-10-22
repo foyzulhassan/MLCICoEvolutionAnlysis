@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build, test and publish gh-pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+
+      - uses: cachix/install-nix-action@v6
+
+      - run: nix-shell --run 'sbt test && sbt docs/mdoc'
+
+      - name: Build website
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: nix-shell --run 'sbt docs/buildWebsite'
+
+      - name: Publish gh-pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: ./website/build
+        with:
+          forceOrphan: true

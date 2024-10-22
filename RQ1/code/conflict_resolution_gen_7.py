@@ -1,8 +1,13 @@
 import pandas as pd 
 
 # open rater_1.xlsx and rater_2.xlsx, load sheet 1 into df1 and df2
-df1 = pd.read_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\labeled_rater_1.xlsx')
-df2 = pd.read_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\rater_2.xlsx')
+#dhia
+# df1 = pd.read_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\labeled_rater_1.xlsx')
+# df2 = pd.read_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\rater_2.xlsx')
+
+#rahul
+df1 = pd.read_excel('C:\\paper\\co_evolution_analysis\\RQ1\\data\\labeled_rater_1.xlsx')
+df2 = pd.read_excel('C:\\paper\\co_evolution_analysis\\RQ1\\data\\rater_2.xlsx')
 
 # merge df1 and df2 on 'commitid' and 'gitauthor columns
 df = pd.merge(df1, df2, on=['commitid', 'gitauthor'])
@@ -20,7 +25,7 @@ df.columns = df.columns.str.replace('_x', '')
 df.rename(columns={'GHACategory_y':'GHACategory_2'}, inplace=True)
 
 # replace the values of Build Process Organization in GHACategory with Build Policy , and Build Policy with Build Process Organization
-df['GHACategory'] = df['GHACategory'].replace({'Build Process Organization': 'Build Policy', 'Build Policy': 'Build Process Organization'})
+#df['GHACategory'] = df['GHACategory'].replace({'Build Process Organization': 'Build Policy', 'Build Policy': 'Build Process Organization'})
 
 # convert GHAcategory and GHACategory_2 columns to string type
 df['GHACategory'] = df['GHACategory'].astype(str)
@@ -41,7 +46,10 @@ print('Number of conflicts RQ1:', df['rq1_conflict'].sum())
 # save the dataframe to a new excel file
 # df.to_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\conflict_resolution.xlsx', index=False)
 
-df2 = pd.read_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ2\\data\\coevolution_taxonomy.xlsx', sheet_name='rater_1')
+# df2 = pd.read_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ2\\data\\coevolution_taxonomy.xlsx', sheet_name='rater_1')
+
+df2 = pd.read_excel('C:\\paper\\co_evolution_analysis\\RQ2\\data\\coevolution_taxonomy.xlsx', sheet_name='rater_1')
+
 
 # merge df and df2 on 'commitid' and 'gitauthor' columns
 
@@ -81,7 +89,7 @@ df_c = df_c.drop(['rq2_lab1_conflict', 'rq2_lab2_conflict'], axis=1)
 
 
 # save the dataframe to a new excel file
-df_c.to_excel('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\conflict_resolution_v2.xlsx', index=False)
+df_c.to_excel('C:\\paper\\co_evolution_analysis\\RQ1\\data\\conflict_resolution_vrchavan.xlsx', index=False)
 
 
 

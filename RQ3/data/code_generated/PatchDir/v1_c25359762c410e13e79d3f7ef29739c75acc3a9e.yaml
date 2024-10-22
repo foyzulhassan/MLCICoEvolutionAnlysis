@@ -1,0 +1,16 @@
+name: build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Test with unittest
+        run: docker run --volume "$(pwd):/home/user/work" -t raahii/python-ffmpeg make

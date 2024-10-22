@@ -1,0 +1,113 @@
+name: Build wheels
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+  schedule:
+    - cron: '0 0 * * sun,wed'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest, macos-latest]
+        platform: [x64]
+        include:
+        - os: ubuntu-latest
+          python-version: 3.6
+          skip-network-tests: 1
+          manylinux-version: 2010
+        - os: ubuntu-latest
+          python-version: 3.7
+          skip-network-tests: 1
+          manylinux-version: 2010
+        - os: ubuntu-latest
+          python-version: 3.8
+          skip-network-tests: 1
+          manylinux-version: 2010
+        - os: ubuntu-latest
+          python-version: 3.9
+          skip-network-tests: 1
+          manylinux-version: 2010
+        - os: macos-latest
+          travis-os-name: osx  # For multibuild
+          skip-network-tests: 1
+          manylinux-version: 1
+    env:
+      PKG_NAME: gensim
+      REPO_DIR: gensim
+      BUILD_COMMIT: HEAD
+      PLAT: x86_64
+      UNICODE_WIDTH: 32
+      MB_PYTHON_VERSION: ${{ matrix.python-version }} # MB_PYTHON_VERSION is needed by Multibuild
+      TEST_DEPENDS: Morfessor==2.0.2a4 python-levenshtein==0.12.0 visdom==0.1.8.9 pytest mock cython nmslib pyemd testfixtures scikit-learn pyemd
+      DOCKER_TEST_IMAGE: multibuild/xenial_x86_64
+      TRAVIS_OS_NAME: ${{ matrix.travis-os-name }}
+      SKIP_NETWORK_TESTS: ${{ matrix.skip-network-tests }}
+      MB_ML_VER: ${{ matrix.manylinux-version }}
+      WHEELHOUSE_UPLOADER_USERNAME: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      WHEELHOUSE_UPLOADER_SECRET: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #
+      # Build wheels with the oldest possible numpy version to avoid
+      # the problem encountered by:
+      #
+      # https://github.com/RaRe-Technologies/gensim/issues/3085
+      #
+      BUILD_DEPENDS: oldest-supported-numpy
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+    - name: Print environment variables
+      run: |
+        echo "PLAT: ${PLAT}"
+        echo "MB_ML_VER: ${MB_ML_VER}"
+        echo "DOCKER_TEST_IMAGE: ${DOCKER_TEST_IMAGE}"
+        echo "TEST_DEPENDS: ${TEST_DEPENDS}"
+        echo "TRAVIS_OS_NAME: ${TRAVIS_OS_NAME}"
+        echo "SKIP_NETWORK_TESTS: ${SKIP_NETWORK_TESTS}"
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install virtualenv
+    - name: Build and Install Wheels
+      run: |
+        echo ::group::Set up Multibuild
+        source multibuild/common_utils.sh
+        source multibuild/travis_steps.sh
+        source config.sh
+        echo ::endgroup::
+        echo ::group::Before install
+        before_install
+        echo ::endgroup::
+        echo ::group::Build wheel
+        build_wheel $REPO_DIR ${{ matrix.PLAT }}
+        echo ::endgroup::
+        echo ::group::Install run
+        install_run ${{ matrix.PLAT }}
+        echo ::endgroup::
+    - name: Upload wheels to s3://gensim-wheels
+      #
+      # Only do this if the credentials are set.
+      # This means that PRs will still build wheels, but not upload them.
+      # (PRs do not have access to secrets).
+      #
+      if: ${{ env.WHEELHOUSE_UPLOADER_USERNAME && env.WHEELHOUSE_UPLOADER_SECRET }}
+      run: |
+        pip install wheelhouse-uploader
+        ls wheelhouse/*.whl
+        python -m wheelhouse_uploader upload --local-folder wheelhouse/ --no-ssl-check gensim-wheels --provider S3 --no-enable-cdn

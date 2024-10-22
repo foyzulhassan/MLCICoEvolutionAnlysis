@@ -1,0 +1,76 @@
+name: 'build'
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  check_skip:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.result_step.outputs.ci-skip }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - id: result_step
+        uses: mstachniuk/ci-skip@master
+        with:
+          commit-filter: '[skip ci];[ci skip];[skip github]'
+          commit-filter-separator: ';'
+
+  latest:
+    needs: check_skip
+    if: ${{ needs.check_skip.outputs.skip == 'false' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+        fail-fast: false
+        matrix:
+            os: ["ubuntu-latest", "macos-latest"]
+            python-version: ["3.8", "3.9", "3.10"]
+            # Install the min or latest dependencies for dirty_cat
+            # as defined in setup.cfg at [options.extra_require].
+            #
+            # Installing these extra dependencies will overwrite the already
+            # installed version defined at install_requires.
+            dependencies-version-type: ["minimal", "latest"]
+            include:
+              - os: "ubuntu-latest"
+                os-name: "Ubuntu"
+              - os: "macos-latest"
+                os-name: "MacOS"
+              - dependencies-version: "dev"
+              - dependencies-version: "dev, min-py38"
+                python-version: "3.8"
+                dependencies-version-type: "minimal"
+              - dependencies-version: "dev, min-py39"
+                python-version: "3.9"
+                dependencies-version-type: "minimal"
+              - dependencies-version: "dev, min-py310"
+                python-version: "3.10"
+                dependencies-version-type: "minimal"
+    name: ${{ matrix.os-name }} with Python ${{ matrix.python-version }} and ${{ matrix.dependencies-version-type }} dependencies
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+            python-version: ${{ matrix.python-version }}
+        name: 'Setup python'
+      - shell: bash {0}
+        run: ./build_tools/github/install.sh
+        name: 'Install dirty-cat'
+        env:
+          DEPS_VERSION: ${{ matrix.dependencies-version }}
+      - shell: bash {0}
+        run: ./build_tools/github/test.sh
+        name: 'Run tests'
+      - uses: codecov/codecov-action@v3
+        if: success()
+        name: 'Upload coverage to CodeCov'

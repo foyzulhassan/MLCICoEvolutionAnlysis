@@ -1,0 +1,23 @@
+name: Testing xmnlp
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    container:
+      image: docker.io/seanlee97/xmnlp:latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install dependencies
+        run: |
+          cp -r /home/xmnlp/xmnlp-onnx-models xmnlp/xmnlp-onnx-models
+          python3.8 -m pip install --upgrade pip
+          pip install -r dev-requirements.txt
+          python3.8 setup.py install
+      - name: pytest
+        run: |
+          pytest --cov -vvvs tests
+      - name: Lint
+        run: |
+          flake8 --config setup.cfg

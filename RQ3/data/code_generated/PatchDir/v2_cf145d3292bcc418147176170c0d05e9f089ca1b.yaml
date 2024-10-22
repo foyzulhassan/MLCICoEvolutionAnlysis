@@ -1,0 +1,61 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'build.gradle.kts'
+      - 'gradle.properties'
+      - 'settings.gradle.kts'
+      - 'src/**'
+      - '**.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'build.gradle.kts'
+      - 'gradle.properties'
+      - 'settings.gradle.kts'
+      - 'src/**'
+      - '**.yml'
+
+jobs:
+  build:
+    name: Java ${{ matrix.java-version }} on ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        java-version: [ 11, 17, 20 ]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java-version }}
+          cache: 'gradle'
+
+      - name: Build and test on Ubuntu and macOS
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' }}
+        run: ./gradlew check
+
+      - name: Build and test on Windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: gradlew.bat check
+        shell: cmd
+
+      - name: Create code coverage report
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java-version == '8' && github.event_name == 'push' }}
+        run: ./gradlew jacocoTestReport
+
+      - name: Upload code coverage report to Codecov
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java-version == '8' && github.event_name == 'push' }}
+        uses: codecov/codecov-action@v1

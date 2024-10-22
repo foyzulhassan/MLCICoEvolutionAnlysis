@@ -1,0 +1,147 @@
+# ----------------------------------------------------------------------
+# Wordless: CI - Github Actions
+# Copyright (C) 2018-2022  Ye Lei (叶磊)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------
+
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  build-windows:
+    runs-on: windows-2016
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+        cache: 'pip'
+
+    - name: Check Python version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install -r requirements.txt
+        python utils/wl_downloader_ci.py
+
+    - name: Run Tests and collect coverage
+      run: |
+        cd src
+
+        pip install pytest-cov
+
+        pytest --cov=./ --cov-report=xml wl_tests/test_overview.py
+        pytest --cov=./ --cov-report=xml wl_tests/test_wordlist.py
+        pytest --cov=./ --cov-report=xml wl_tests/test_ngram.py
+
+        pytest --cov=./ --cov-report=xml wl_tests/wl_nlp/test_sentence_tokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_nlp/test_word_tokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_nlp/test_syl_tokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_nlp/test_word_detokenization.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_nlp/test_pos_tagging.py
+        pytest --cov=./ --cov-report=xml wl_tests/wl_nlp/test_lemmatization.py
+        
+        pytest --cov=./ --cov-report=xml --ignore=wl_tests/wl_nlp/test_sentence_tokenization.py --ignore=wl_tests/wl_nlp/test_word_tokenization.py --ignore=wl_tests/wl_nlp/test_syl_tokenization.py --ignore=wl_tests/wl_nlp/test_word_detokenization.py --ignore=wl_tests/wl_nlp/test_pos_tagging.py --ignore=wl_tests/wl_nlp/test_lemmatization.py --ignore=wl_tests/test_overview.py --ignore=wl_tests/test_wordlist.py --ignore=wl_tests/test_ngram.py --ignore=wl_tests/test_collocation.py
+
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v2
+
+  build-macos:
+    runs-on: macos-10.15
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+        cache: 'pip'
+
+    - name: Check Python version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        brew install libomp
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+        export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+
+        python -m pip install --upgrade pip setuptools
+        pip install numpy
+        pip install -r requirements.txt
+        python utils/wl_downloader_ci.py
+
+    - name: Run Tests
+      run: |
+        cd src
+
+        pytest wl_tests/test_overview.py
+        pytest wl_tests/test_wordlist.py
+        pytest wl_tests/test_ngram.py
+
+        pytest wl_tests/wl_nlp/test_sentence_tokenization.py
+        pytest wl_tests/wl_nlp/test_word_tokenization.py
+        pytest wl_tests/wl_nlp/test_syl_tokenization.py
+        pytest wl_tests/wl_nlp/test_word_detokenization.py
+        pytest wl_tests/wl_nlp/test_pos_tagging.py
+        pytest wl_tests/wl_nlp/test_lemmatization.py
+        
+        pytest --ignore=wl_tests/wl_nlp/test_sentence_tokenization.py --ignore=wl_tests/wl_nlp/test_word_tokenization.py --ignore=wl_tests/wl_nlp/test_syl_tokenization.py --ignore=wl_tests/wl_nlp/test_word_detokenization.py --ignore=wl_tests/wl_nlp/test_pos_tagging.py --ignore=wl_tests/wl_nlp/test_lemmatization.py --ignore=wl_tests/test_overview.py --ignore=wl_tests/test_wordlist.py --ignore=wl_tests/test_ngram.py --ignore=wl_tests/test_collocation.py
+
+  build-linux:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+        architecture: 'x64'
+        cache: 'pip'
+
+    - name: Check Python version
+      run: python --version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools
+        pip install numpy
+        pip install -r requirements.txt
+        python utils/wl_downloader_ci.py
+
+    - name: Run Tests
+      run: |
+        cd src
+
+        pytest wl_tests/wl_nlp/test_sentence_tokenization.py
+        pytest wl_tests/wl_nlp/test_word_tokenization.py
+        pytest wl_tests/wl_nlp/test_syl_tokenization.py
+        pytest wl_tests/wl_nlp/test_word_detokenization.py
+        pytest wl_tests/wl_nlp/test_pos_tagging.py
+        pytest wl_tests/wl_nlp/test_lemmatization.py
+        
+        pytest --ignore=wl_tests/wl_nlp/test_sentence_tokenization.py --ignore=wl_tests/wl_nlp/test_word_tokenization.py --ignore=wl_tests/wl_nlp/test_syl_tokenization.py --ignore=wl_tests/wl_nlp/test_word_detokenization.py --ignore=wl_tests/wl_nlp/test_pos_tagging.py --ignore=wl_tests/wl_nlp/test_lemmatization.py --ignore=wl_tests/test_file_area.py --ignore=wl_tests/test_overview.py --ignore=wl_tests/test_wordlist.py --ignore=wl_tests/test_ngram.py --ignore=wl_tests/test_collocation.py

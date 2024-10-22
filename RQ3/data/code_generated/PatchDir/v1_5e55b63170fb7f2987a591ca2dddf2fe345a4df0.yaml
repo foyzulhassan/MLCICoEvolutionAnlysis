@@ -1,0 +1,54 @@
+name: CI Test
+
+on: [push, pull_request]
+
+jobs:
+
+  ci-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc git g++ libev-dev libyaml-dev
+          cd lib/poseidon_api && poetry install --no-interaction
+          cd lib/poseidon_cli && poetry install --no-interaction
+          cd lib/poseidon_core && poetry install --no-interaction
+
+      - name: Code Quality
+        run: |
+          cd lib/poseidon_api && poetry run black . --check
+          cd lib/poseidon_cli && poetry run black . --check
+          cd lib/poseidon_core && poetry run black . --check
+
+      - name: Test with pytest
+        run: |
+          cd lib/poseidon_api && poetry run pytest --cov-report term-missing -c .coveragerc --cov=. --cov-report=xml
+          cd lib/poseidon_cli && poetry run pytest --cov-report term-missing -c .coveragerc --cov=. --cov-report=xml
+          cd lib/poseidon_core && poetry run pytest --cov-report term-missing -c .coveragerc --cov=. --cov-report=xml
+      - name: Upload coverage
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: true

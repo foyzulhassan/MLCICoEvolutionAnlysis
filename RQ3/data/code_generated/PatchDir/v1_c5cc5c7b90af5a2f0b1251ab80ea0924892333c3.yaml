@@ -1,0 +1,56 @@
+# References:
+# - https://docs.github.com/en/actions/learn-github-actions/contexts#github-context
+# - https://docs.github.com/en/actions/using-workflows/reusing-workflows#calling-a-reusable-workflow
+# - https://github.com/intel/dffml/blob/main/.github/workflows/dispatch_build_images_containers.yml
+name: "DFFML: Build: Images: Containers"
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build_images_containers.yml"
+      - ".github/workflows/dffml_build_images_containers.yml"
+      - "Dockerfile"
+      - "**/*Dockerfile"
+      - "**/*.manifest.json"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/build_images_containers.yml"
+      - ".github/workflows/dffml_build_images_containers.yml"
+      - "Dockerfile"
+      - "**/*Dockerfile"
+      - "**/*.manifest.json"
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    outputs:
+      manifest: ${{ steps.create-manifest-instance.outputs.github_actions_manifest }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build manifest from changed dockerfiles
+        uses: "./.github/actions/create_manifest_instance_build_images_containers"
+        id: create-manifest-instance
+        with:
+          root_path: "."
+          owner_repository: ${{ github.repository }}
+          branch: ${{ github.ref_name }}
+          compare_url: ${{ github.event.repository.compare_url }}
+          gh_access_token: ${{ github.token }}
+          head: ${{ github.event.after }}
+          base: ${{ github.event.before }}
+          base_ref: ${{ github.base_ref }}
+          prefix: '[".", "scripts", "dffml/skel/operations"]'
+          # TODO Drop non root dir once pinning rebuild chain is active
+          no_delta_prefix: '[".", "scripts", "dffml/skel/operations"]'
+
+  build:
+    needs: manifest
+    uses: "./.github/workflows/build_images_containers.yml"
+    if: ${{ fromJSON(needs.manifest.outputs.length) > 0 }}
+    with:
+      manifests: "${{ needs.manifest.outputs.github_actions_manifest }}"

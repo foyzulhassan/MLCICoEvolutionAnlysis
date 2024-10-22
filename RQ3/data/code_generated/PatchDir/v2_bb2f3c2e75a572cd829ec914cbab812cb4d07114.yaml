@@ -1,0 +1,197 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'include/**'
+      - '.github/**'
+      - 'tests/**'
+      - configure.ac
+      - Makefile.am
+
+  pull_request:
+    branches: [master]
+
+jobs:
+  notification:
+    runs-on: ubuntu-latest
+    name: Notify start to IRC gitlama
+    outputs:
+      branch: ${{ steps.extract_branch.outputs.branch }}
+    steps:
+      - name: Extract Branch name
+        id: extract_branch
+        shell: bash
+        run: echo "branch=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
+      - name: IRC notification
+        uses: Gottox/irc-message-action@v2
+        with:
+          server: irc.uvt.nl
+          channel: '#gitlama'
+          nickname: GitHub
+          message: >
+            ${{ github.actor }} started a build of
+            ${{ github.event.repository.name }}
+            [${{ steps.extract_branch.outputs.branch }}]
+  build:
+    runs-on: ${{ matrix.os }}
+    needs: notification
+    strategy:
+      matrix:
+        os: [ubuntu-latest]    # , macos-latest]
+        compiler: [g++, clang++]
+
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v4.1.1
+      - name: Install Build Environment
+        run: |
+             if [ "$RUNNER_OS" == "Linux" ]; then
+                sudo apt-get install pkg-config autoconf-archive
+             else
+                brew upgrade;
+                brew install pkg-config;
+                brew install autoconf-archive;
+                brew install autoconf;
+                brew install automake;
+             fi
+      - name: Install Dependencies
+        run: |
+             if [ "$RUNNER_OS" == "Linux" ]; then
+                sudo apt-get install libicu-dev libxml2-dev libbz2-dev;
+                sudo apt-get install zlib1g-dev libexttextcat-dev;
+                sudo apt-get install cppcheck
+             else
+                brew install libxml2
+                brew install bzip2
+                brew install zlib
+                brew install libtextcat
+                brew install cppcheck
+             fi
+      - name: Configure CppCheck
+        run: |
+             if [ "$RUNNER_OS" == "Linux" ]; then
+                cpc_opts="--enable=all --inline-suppr --force -I include -I /usr/local/include --suppress=duplInheritedMember:/usr/local/include/libfolia/*.h --quiet --error-exitcode=0"
+             else
+                cpc_opts="--enable=all --inline-suppr --force -I include -I /usr/local/include -I /usr/local/opt/icu4c/include -I /usr/local/opt/libxml2/include --suppress=missingIncludeSystem --suppress=missingInclude --suppress=duplInheritedMember --quiet --error-exitcode=0"
+             fi
+             echo "cpc_opts=$cpc_opts" >> $GITHUB_ENV
+
+      - name: install TiccUtils
+        env:
+          CXX: ${{ matrix.compiler }}
+        run: |
+          git clone https://github.com/LanguageMachines/ticcutils;
+          cd ticcutils;
+          bash bootstrap.sh;
+          ./configure;
+          make;
+          sudo make install;
+          cd ..;
+
+      - name: install libfolia
+        env:
+          CXX: ${{ matrix.compiler }}
+        run: |
+          git clone https://github.com/LanguageMachines/libfolia;
+          cd libfolia;
+          bash bootstrap.sh;
+          ./configure;
+          make;
+          sudo make install;
+          cd ..;
+
+      - name: install uctodata
+        env:
+          CXX: ${{ matrix.compiler }}
+        run: |
+          git clone https://github.com/LanguageMachines/uctodata;
+          cd uctodata;
+          bash bootstrap.sh;
+          ./configure;
+          make;
+          sudo make install;
+          cd ..;
+
+      - name: bootstrap
+        run: sh bootstrap.sh
+      - name: configure
+        env:
+          CXX: ${{ matrix.compiler }}
+        run: ./configure
+      - name: Static Code-check
+        run: cppcheck ${{ env.cpc_opts }} .
+      - name: make
+        run: make
+      - name: install
+        run: sudo make install
+      - name: check
+        id: check
+        env:
+          CXX: ${{ matrix.compiler }}
+        run: LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib make check
+        continue-on-error: true
+      - name: show log on error
+        if: ${{ steps.check.outcome != 'success' }}
+        run: cat src/test-suite.log
+      - name: get compiler ID
+        id: compiler
+        run: |
+          id=$(echo ${{matrix.compiler}} | cut -d\+ -f1)
+          echo "id=$id" >> $GITHUB_OUTPUT
+      - name: Notify IRC of failure
+        if: ${{ steps.check.outcome != 'success' }}
+        uses: Gottox/irc-message-action@v2
+        with:
+          server: irc.uvt.nl
+          channel: '#gitlama'
+          nickname: GH-${{ runner.os }}-${{ steps.compiler.outputs.id }}
+          message: "ucto [${{ needs.notification.outputs.branch }}] build with ${{ matrix.compiler }} by ${{ github.actor }} on ${{ matrix.os }}: \u00034FAIL\u0003"
+      - name: Notify IRC of succes
+        if: ${{ steps.check.outcome == 'success' }}
+        uses: Gottox/irc-message-action@v2
+        with:
+          server: irc.uvt.nl
+          channel: '#gitlama'
+          nickname: GH-${{ runner.os }}-${{ steps.compiler.outputs.id }}
+          message: "ucto [${{ needs.notification.outputs.branch }}] build with ${{ matrix.compiler }} by ${{ github.actor }} on ${{ matrix.os }}: \u00033SUCCESS\u0003"
+
+      - name: run uctotests
+        env:
+          FOLIAPATH: ../foliapy/folia-repo
+          EXPECT: 0
+          LD_LIBRARY_PATH: $LD_LIBRARY_PATH:/usr/local/lib
+        run: |
+          cd tests
+          ./testaction.sh
+          TEST_STAT=$(cat status.tmp)
+          echo "test_status=$TEST_STAT" >> $GITHUB_ENV
+        continue-on-error: true
+      - name: show log on error
+        if: ${{ env.test_status != '0' }}
+        run: |
+          cat testoutput/*.err
+          cat testoutput/*.diff
+      - name: Notify IRC of failure
+        if: ${{ env.test_status != '0' }}
+        uses: Gottox/irc-message-action@v2
+        with:
+          server: irc.uvt.nl
+          channel: '#gitlama'
+          nickname: GH-${{ runner.os }}-${{ steps.compiler.outputs.id }}
+          message: "ucto tests [${{ needs.notification.outputs.branch }}] build with ${{ matrix.compiler }} by ${{ github.actor }} on ${{ matrix.os }}: \u00034FAIL\u0003"
+
+      - name: Notify IRC of succes
+        if: ${{ env.test_status == '0' }}
+        uses: Gottox/irc-message-action@v2
+        with:
+          server: irc.uvt.nl
+          channel: '#gitlama'
+          nickname: GH-${{ runner.os }}-${{ steps.compiler.outputs.id }}
+          message: "ucto tests [${{ needs.notification.outputs.branch }}] build with ${{ matrix.compiler }} by ${{ github.actor }} on ${{ matrix.os }}: \u00033SUCCESS\u0003"

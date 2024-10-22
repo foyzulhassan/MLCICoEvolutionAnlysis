@@ -1,0 +1,5 @@
+OBJECT [0,22]
+    FIELD [1,21]
+        String: "placeholder" [1,14]
+        STRING [15,21]
+            String: "John" [15,21]

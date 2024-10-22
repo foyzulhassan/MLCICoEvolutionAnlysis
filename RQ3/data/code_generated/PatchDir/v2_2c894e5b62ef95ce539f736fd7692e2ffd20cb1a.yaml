@@ -1,0 +1,106 @@
+name: dailyunittest
+
+on:
+  schedule:
+    # every day at  8:15 AM UTC
+    - cron: 15 8 * * *
+
+jobs:
+  build-linux:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-20.04 ]
+        legacy: [ enable-legacy, disable-legacy ]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        
+    - name: Install dependencies
+      run: mkdir -p m4 && sudo apt-get install autoconf-archive libleptonica-dev libpango1.0-dev cabextract -y
+
+    - name: Autogen
+      run: ./autogen.sh
+
+    - name: Configure
+      run: ./configure --enable-openmp --disable-shared --disable-debug --disable-opencl --disable-graphics --${{ matrix.legacy }} --with-tensorflow=no 'CXXFLAGS=-g -O2 -fsanitize=address,undefined'
+      
+    - name: Make Tesseract and Training Tools
+      run: make training -j 8
+      
+    - name: Download fonts, tessdata and langdata required for tests
+      run: git clone https://github.com/egorpugin/tessdata tessdata_unittest
+      
+    - name: Copy fonts and move tessdata
+      run: cp tessdata_unittest/fonts/* test/testing/ && mv tessdata_unittest/* ../ && ls  ../
+      
+    - name: Make check
+      run: make check -j 4
+      
+    - name: Display Test-Suite report
+      run: git log -1 && cat unittest/test-suite.log
+      if: success() || failure()
+      
+  build-macos:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest ]
+        compiler: [ gcc, clang ]
+    
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        
+    - name: Install Macports
+      run: |
+        curl -LO https://raw.githubusercontent.com/GiovanniBussi/macports-ci/master/macports-ci; source ./macports-ci install
+        
+    - name: Install Dependencies
+      run: |
+        sudo port install \
+                  autoconf autoconf-archive \
+                  automake \
+                  libtool \
+                  pkgconfig \
+                  leptonica 
+        sudo port install cabextract abseil
+        sudo port install cairo pango icu +devel
+        
+    - name: Setup
+      run: |
+        mkdir -p m4
+        export CC=${{ matrix.compiler }}
+        export CXX=${{ matrix.compiler }}
+        ./autogen.sh
+        
+    - name: Configure
+      run: |
+        ./configure
+        
+    - name: Make
+      run: |
+        make
+        
+    - name: Make Training
+      run: |
+        make training
+        sudo make install training-install
+      
+    - name: Download fonts, tessdata and langdata required for tests
+      run: git clone https://github.com/egorpugin/tessdata tessdata_unittest
+      
+    - name: Copy fonts and move tessdata
+      run: cp tessdata_unittest/fonts/* test/testing/ && mv tessdata_unittest/* ../ && ls  ../
+      
+    - name: Make check
+      run: make check -j 4
+      
+    - name: Display Test-Suite report
+      run: git log -1 && cat unittest/test-suite.log
+      if: success() || failure()

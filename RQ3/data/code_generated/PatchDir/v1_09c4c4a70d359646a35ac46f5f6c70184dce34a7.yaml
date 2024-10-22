@@ -1,0 +1,228 @@
+name: Linux|Win|MacOS
+
+on:
+  push:
+    branches:
+    - master
+
+jobs:
+  UpdateDevTag:
+    runs-on: ubuntu-16.04
+    
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v1  
+    - name: Install hub
+      uses: geertvdc/setup-hub@master
+    - name: Setup Github credentials
+      uses: fusion-engineering/setup-git-credentials@v2
+      with:
+        credentials: ${{secrets.GIT_CREDENTIALS}}
+    - name: Update dev_build tag and release
+      env:
+        GITHUB_USER: LorenzE
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git config --global user.email lorenzesch@hotmail.com
+        git config --global user.name $GITHUB_USER
+        # Delete current dev_build release remotley. 
+        # Must be done before deleting the remote tag associated with the dev_build release. 
+        # This prevents a draft release to be left over after we delete the tag remotley. 
+        hub release delete dev_build
+        # Delete current tag remotley
+        git push origin :refs/tags/dev_build
+        # Change dev_build tag to point to newest commit
+        git tag dev_build -f -a -m "Development Builds"
+        # Send the new tag
+        git push -f --tag
+        # Create new dev_build release
+        hub release create -m "Development Builds" dev_build --prerelease
+
+  Linux:
+    runs-on: ubuntu-16.04
+    needs: UpdateDevTag
+    
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v1  
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: 5.14.0
+        modules: qtcharts
+    - name: Configure and compile MNE-CPP
+      run: |        
+        qmake -r MNECPP_CONFIG+=noTests
+        make -j2 
+    - name: Package binaries
+      run: |
+        # Install libxkbcommon so linuxdeployqt can find it
+        sudo apt-get install libxkbcommon-x11-0
+        # Downloading linuxdeployqt from continious release
+        wget -c -nv "https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage"
+        sudo chmod a+x linuxdeployqt-continuous-x86_64.AppImage
+        # Creating a directory for linuxdeployqt to create results 
+        sudo mkdir -p -m777 mne-cpp
+        # Copying built data to folder for easy packaging 	
+        cp -r ./bin ./lib mne-cpp/
+        # linuxdeployqt uses mne_scan binary to resolve dependencies in current directory. 
+        cd mne-cpp
+        ../linuxdeployqt-continuous-x86_64.AppImage bin/mne_scan -verbose2
+        # Creating archive of everything in current directory
+        tar cfvz ../mne-cpp-linux-x86_64.tar.gz ./*
+    - name: Deploy binaries with dev_build release on Github
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: mne-cpp-linux-x86_64.tar.gz
+        asset_name: mne-cpp-linux-x86_64.tar.gz
+        tag: dev_build
+        overwrite: true
+
+  MacOS:
+    runs-on: macos-latest
+    needs: UpdateDevTag
+
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v1
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: 5.14.0
+        modules: qtcharts
+    - name: Configure and compile MNE-CPP
+      run: |        
+        qmake -r MNECPP_CONFIG+=noTests MNECPP_CONFIG+=noExamples
+        make -j2
+    - name: Package binaries
+      run: |
+        # Creating archive of all macos deployed applications
+        tar cfvz mne-cpp-macos-x86_64.tar.gz bin/mne_scan.dmg bin/mne_browse.dmg bin/mne_analyze.dmg
+    - name: Deploy MNE Scan binaries with dev_build release on Github
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: mne-cpp-macos-x86_64.tar.gz
+        asset_name: mne-cpp-macos-x86_64.tar.gz
+        tag: dev_build
+        overwrite: true
+
+  Win:
+    runs-on: windows-2016
+    needs: UpdateDevTag
+
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v1      
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: 5.14.0
+        arch: win64_msvc2017_64
+        modules: qtcharts
+    - name: Install jom (Windows)
+      run: |
+        Invoke-WebRequest http://download.qt.io/official_releases/jom/jom.zip -OutFile .\jom.zip
+        expand-archive -path "jom.zip" -destinationpath "$HOME\jom"
+        echo "::add-path::$HOME\jom"
+    - name: Configure and compile MNE-CPP
+      run: |
+        cmd.exe /c "call `"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat`" && set > %temp%\vcvars.txt"
+        Get-Content "$env:temp\vcvars.txt" | Foreach-Object { if ($_ -match "^(.*?)=(.*)$") { Set-Content "env:\$($matches[1])" $matches[2] } }
+        qmake -r MNECPP_CONFIG+=noTests
+        jom -j2
+    - name: Package binaries
+      run: |
+        7z a mne-cpp-windows-x86_64.zip ./bin
+    - name: Deploy binaries with dev_build release on Github
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: mne-cpp-windows-x86_64.zip
+        asset_name: mne-cpp-windows-x86_64.zip
+        tag: dev_build
+        overwrite: true
+        
+  Tests:
+    runs-on: ubuntu-latest
+    needs: UpdateDevTag
+
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v1
+    - name: Install Codecov
+      run: |
+        sudo pip install codecov 
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v2
+      with:
+        version: 5.14.0
+        modules: qtcharts
+    - name: Configure and compile MNE-CPP
+      run: |
+        qmake -r MNECPP_CONFIG+=withCodeCov MNECPP_CONFIG+=noApplications MNECPP_CONFIG+=noExamples
+        make -j2
+    - name: Run tests and upload results to Codecov
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        QTEST_FUNCTION_TIMEOUT: 900000
+      run: |
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/lib
+        git clone https://github.com/mne-tools/mne-cpp-test-data.git ./bin/mne-cpp-test-data
+        for test in ./bin/test_*;
+        do
+          # Run all tests and call gcov on all cpp files after each test run. Then upload to codecov for every test run.
+          # Codecov is able to process multiple uploads and merge them as soon as the CI job is done.          
+          echo ">> Starting $test"
+          $test
+          find ./libraries -type f -name "*.cpp" -execdir gcov {} \; > /dev/null
+          # Hide codecov output since it corrupts the log too much
+          codecov > /dev/null
+        done
+
+  Documentation:
+    runs-on: ubuntu-latest
+    needs: UpdateDevTag
+
+    steps:
+    - name: Clone repository
+      uses: actions/checkout@v1
+    - name: Install Qt Dev Tools, Doxygen and Graphviz
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -qq qttools5-dev-tools doxygen graphviz
+    - name: Run Doxygen and package result
+      run: |        
+        cd doc/doxygen
+        doxygen mne-cpp_doxyfile
+    - name: Setup Github credentials
+      uses: fusion-engineering/setup-git-credentials@v2
+      with:
+        credentials: ${{secrets.GIT_CREDENTIALS}}    
+    - name: Deploy qch docu data base with dev_build release on Github
+      uses: svenstaro/upload-release-action@v1-release
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: doc/doxygen/qt-creator_doc/mne-cpp.qch
+        asset_name: mne-cpp-doc-qtcreator
+        tag: dev_build
+        overwrite: true
+    - name: Update documentation at Github pages
+      run: |    
+        cd doc/doxygen
+        git config --global user.email lorenzesch@hotmail.com
+        git config --global user.name LorenzE
+        git clone -b gh-pages https://github.com/mne-cpp/doxygen-api gh-pages
+        cd gh-pages
+        # Remove all files first
+        git rm * -r
+        git commit --amend -a -m 'Update docu' --allow-empty
+        touch .nojekyll        
+        # Copy doxygen files
+        cp -r ../html/* .
+        # Add all new files, commit and push
+        git add *
+        git add .nojekyll
+        git commit --amend -a -m 'Update docu'
+        git push -f --all

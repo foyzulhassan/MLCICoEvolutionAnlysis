@@ -1,0 +1,63 @@
+on:
+  push:
+    branches: [master,github-actions-test]
+    paths-ignore: 
+    - 'docs/**'
+    - 'README.rst'
+    - 'LICENSE.md'
+    - '.deepsource.toml'
+    - '.gitignore'
+    
+  pull_request:
+    branches: [master]
+    paths-ignore: 
+    - 'docs/**'
+    - 'README.rst'
+    - 'LICENSE.md'
+    - '.deepsource.toml'
+    - '.gitignore'
+
+
+jobs:
+  build:
+
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.6,3.7,3.8]
+        geomstats-backend : ['numpy','pytorch','tensorflow']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build using Python ${{matrix.python-version}} and Backend ${{matrix.geomstats-backend}}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{matrix.python-version}}
+
+      - name: install pandoc [apt-get] (not installing with pip)
+        if: ${{matrix.os == 'ubuntu-latest'}}
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install pandoc
+          
+      - name: install dependencies [pip]
+        run:  |
+          pip install --upgrade pip setuptools wheel
+          for req in ci-requirements.txt dev-requirements.txt opt-requirements.txt requirements.txt; do
+            pip install -q -r $req
+          done  
+          pip install -e .      
+
+      - name: linting [flake8]
+        run: |
+          flake8 --ignore=D,W503,W504 geomstats examples tests
+          flake8 geomstats/geometry geomstats/learning 
+
+      - name: unit testing [nose2]
+        run: |
+          nose2 --with-coverage tests
+          
+      - name: generating code coverage 
+        run: |
+          bash <(curl -s https://codecov.io/bash) -c -F $${{matrix.geomstats-backend}}

@@ -1,0 +1,46 @@
+name: Publish Docker images
+on: 
+  push:
+    branches:
+      - master
+jobs:
+  cuda_image_build:
+    name: CUDA image build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Build the CUDA Docker image
+      run: docker build . --file .docker/Dockerfile-CUDA --tag flml/flashlight:cuda-consolidation-latest
+    - name: Docker login
+      env:
+          USER: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_PASSWORD }}  
+      run: docker login -u=$USER -p=$PASSWORD
+    - name: Push image with the latest tag
+      run: docker push flml/flashlight:cuda-consolidation-latest
+    - name: Tag revision
+      run: docker tag flml/flashlight:cuda-consolidation-latest flml/flashlight:cuda-consolidation-`git rev-parse --short HEAD`
+    - name: Push image with the revision tag
+      run: docker push flml/flashlight:cuda-consolidation-`git rev-parse --short HEAD` 
+    - name: Docker logout
+      run: docker logout
+  cpu_image_build:
+    name: CPU image build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Build the CPU Docker image
+      run: docker build . --file .docker/Dockerfile-CPU --tag flml/flashlight:cpu-consolidation-latest
+    - name: Docker login
+      env:
+          USER: ${{ secrets.DOCKER_USERNAME }}
+          PASSWORD: ${{ secrets.DOCKER_PASSWORD }}  
+      run: docker login -u=$USER -p=$PASSWORD
+    - name: Push image with the latest tag
+      run: docker push flml/flashlight:cpu-consolidation-latest
+    - name: Tag revision
+      run: docker tag flml/flashlight:cpu-consolidation-latest flml/flashlight:cpu-consolidation-`git rev-parse --short HEAD`
+    - name: Push image with the revision tag
+      run: docker push flml/flashlight:cpu-consolidation-`git rev-parse --short HEAD` 
+    - name: Docker logout
+      run: docker logout

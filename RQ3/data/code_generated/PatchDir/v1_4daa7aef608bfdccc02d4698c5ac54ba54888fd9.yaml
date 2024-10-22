@@ -1,0 +1,53 @@
+name: Build Ubuntu
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install Qt 5 + protobuf
+        run: sudo apt-get install -qq -y libprotobuf-dev qt5-default git build-essential protobuf-compiler
+
+      - name: Get OpenCV dependencies
+        run: sudo apt-get install -qq -y cmake pkg-config libjpeg-dev libtiff5-dev libpng-dev
+
+      - name: Clone OpenCV
+        run: >
+          git clone --branch 4.5.3 --depth 1 https://github.com/opencv/opencv;
+          git clone --branch 4.5.3 --depth 1 https://github.com/opencv/opencv_contrib;
+
+      - name: Compile OpenCV
+        run: |
+            cd opencv \
+            && mkdir build \
+            && cd build \
+            && cmake .. \
+            -DOPENCV_EXTRA_MODULES_PATH=../../opencv_contrib/modules \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=OFF .. \
+            -DCMAKE_BUILD_TYPE=RELEASE \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_DOCS=OFF \
+            -DBUILD_opencv_apps=OFF \
+            && make -j4 \
+            && sudo make install
+      
+      - name: Compile protobuf messages
+        run: protoc --proto_path ./src/proto --cpp_out ./src/proto feature.proto example.proto
+
+      - name: Run QMake
+        run: qmake -makefile -o Makefile DeepLabel.pro
+
+      - name: Run Make
+        run: make -j4
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: linux-release
+          path: ./release/deeplabel

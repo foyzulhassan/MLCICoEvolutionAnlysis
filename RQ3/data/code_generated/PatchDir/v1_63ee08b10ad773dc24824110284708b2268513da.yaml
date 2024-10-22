@@ -1,0 +1,189 @@
+name: CI/CD
+on:
+  push:
+    branches:
+    - master
+    tags:
+    - '*'
+  pull_request:
+  workflow_dispatch:
+env:
+  PIPX_HOME: "/home/runner/.cache/pipx"
+  PIPX_BIN_DIR: "/home/runner/.local/bin"
+  POETRY_VERSION: "1.2.0"
+jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    name: lint with isort, Black & flake8
+    env:
+      PYTHON_VERSION: "3.10"
+    steps:
+
+    - uses: actions/checkout@v3
+    - name: Load cached Poetry installation and repositories info
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pipx/venvs
+          ~/.local/bin
+          ~/.cache/pypoetry/cache/repositories
+        key: poetry-installation-and-repos-${{ env.PYTHON_VERSION }}-${{env.POETRY_VERSION }}-${{ github.job }}
+    - name: Install Poetry
+      run: |
+        pipx install poetry==$POETRY_VERSION
+    - name: Set up Python ${{ env.python-version }}
+      uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # v4.4.0
+      with:
+        python-version: "${{ env.PYTHON_VERSION }}"
+        cache: 'poetry'
+        cache-dependency-path: 'pyproject.toml'
+    - name: Install Python dev dependencies
+      run: |
+        poetry install --only dev
+    - name: Lint with isort
+      run: |
+        poetry run isort . --check-only --diff
+    - name: Lint with Black
+      run: |
+        poetry run black . --check --diff
+    - name: Lint with flake8
+      run: |
+        poetry run flake8
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    name: test on Python ${{ matrix.python-version }}
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install system packages
+
+      run: |
+        sudo apt-get install \
+          libvoikko1 \
+          voikko-fi
+    - name: Load cached Poetry installation and repositories info
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pipx/venvs
+          ~/.local/bin
+          ~/.cache/pypoetry/cache/repositories
+        key: poetry-installation-and-repos-${{ matrix.python-version }}-${{env.POETRY_VERSION }}-${{ github.job }}
+    - name: Install Poetry
+      run: |
+        pipx install poetry==$POETRY_VERSION
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # v4.4.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'poetry'
+        cache-dependency-path: 'pyproject.toml'
+    - name: Install Python dependencies
+      run: |
+        # Selectively install the optional dependencies for some Python versions
+        # For Python 3.8:
+        if [[ ${{ matrix.python-version }} == '3.8' ]]; then
+          poetry install -E "nn omikuji yake voikko";
+        fi
+        # For Python 3.9:
+        if [[ ${{ matrix.python-version }} == '3.9' ]]; then
+          poetry install -E "fasttext spacy";
+          # download the small English pretrained spaCy model needed by spacy analyzer
+          poetry run python -m spacy download en_core_web_sm --upgrade-strategy only-if-needed
+        fi
+        # For Python 3.10:
+        if [[ ${{ matrix.python-version }} == '3.10' ]]; then
+          poetry install -E "nn omikuji yake";
+        fi
+        poetry run python -m nltk.downloader punkt
+
+    - name: Test with pytest
+      run: |
+        poetry run pytest --cov=./ --cov-report xml
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@81cd2dc8148241f03f5839d295e000b8f761e378  # v3.1.0
+
+  publish-docker-latest:
+    name: publish latest Docker image
+    needs: [lint, test]
+    runs-on: ubuntu-20.04
+    timeout-minutes: 15
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+    - name: Login to Quay.io
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a  # v2.1.0
+      with:
+        registry: quay.io
+        username: ${{ secrets.YHTEENTOIMIVUUSPALVELUT_QUAY_IO_USERNAME }}
+        password: ${{ secrets.YHTEENTOIMIVUUSPALVELUT_QUAY_IO_PASSWORD }}
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea  # v4.1.1
+      with:
+        images: quay.io/natlibfi/annif
+        tags: |
+          latest
+    - name: Build and push to Quay.io
+      uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5  # v3.2.0
+      with:
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  publish-release:
+    name: publish release
+    needs: [lint, test]
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')
+    steps:
+    - uses: actions/checkout@v3
+    - name: Load cached Poetry installation and repositories info
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pipx/venvs
+          ~/.local/bin
+          ~/.cache/pypoetry/cache/repositories
+        key: poetry-installation-and-repos-${{ matrix.python-version }}-${{env.POETRY_VERSION }}-${{ github.job }}
+    - name: Install Poetry
+      run: |
+        pipx install poetry==$POETRY_VERSION
+    - name: Set up Python 3.9
+      uses: actions/setup-python@5ccb29d8773c3f3f653e1705f474dfaa8a06a912  # v4.4.0
+      with:
+        python-version: '3.9'
+        cache: 'poetry'
+        cache-dependency-path: 'pyproject.toml'
+    - name: Build and publish distribution to PyPI
+      env:
+        POETRY_HTTP_BASIC_PYPI_USERNAME: __token__
+        POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        poetry publish --build
+
+    - name: Login to Quay.io
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a  # v2.1.0
+      with:
+        registry: quay.io
+        username: ${{ secrets.YHTEENTOIMIVUUSPALVELUT_QUAY_IO_USERNAME }}
+        password: ${{ secrets.YHTEENTOIMIVUUSPALVELUT_QUAY_IO_PASSWORD }}
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea  # v4.1.1
+      with:
+        images: quay.io/natlibfi/annif
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+    - name: Build and push to Quay.io
+      uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5  # v3.2.0
+      with:
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}

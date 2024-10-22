@@ -1,0 +1,158 @@
+# ----------------------------------------------------------------------
+# Wordless: CI - Github Actions
+# Copyright (C) 2018-2022  Ye Lei (叶磊)
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ----------------------------------------------------------------------
+
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  # Windows
+  build-windows:
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+          cache: 'pip'
+
+      # Check Python version
+      - name: Check Python version
+        run: python --version
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install -r requirements.txt
+          # For Codecov
+          pip install pytest-cov
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests and collect coverage
+      - name: Run Tests and collect coverage
+        run: |
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_lemmatization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_matching.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_nlp_utils.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_pos_tagging.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_sentence_tokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_stop_word_lists.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_syl_tokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_word_detokenization.py
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_nlp/test_word_tokenization.py
+
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_file_area
+          pytest --cov=./ --cov-report=xml --cov-append tests/wl_tests_work_area
+
+          pytest --cov=./ --cov-report=xml --cov-append --ignore=tests/wl_tests_nlp --ignore=tests/wl_tests_file_area --ignore=tests/wl_tests_work_area
+
+      # Upload coverage to Codecov
+      - name: "Upload coverage to Codecov"
+        uses: codecov/codecov-action@v3
+
+  # macOS
+  build-macos:
+    runs-on: macos-11
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+          cache: 'pip'
+
+      # Check Python version
+      - name: Check Python version
+        run: python --version
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install -r requirements.txt
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          pytest tests/wl_tests_nlp/test_lemmatization.py
+          pytest tests/wl_tests_nlp/test_matching.py
+          pytest tests/wl_tests_nlp/test_nlp_utils.py
+          pytest tests/wl_tests_nlp/test_pos_tagging.py
+          pytest tests/wl_tests_nlp/test_sentence_tokenization.py
+          pytest tests/wl_tests_nlp/test_stop_word_lists.py
+          pytest tests/wl_tests_nlp/test_syl_tokenization.py
+          pytest tests/wl_tests_nlp/test_word_detokenization.py
+          pytest tests/wl_tests_nlp/test_word_tokenization.py
+
+          pytest tests/wl_tests_file_area
+          # Ignore tests of Profiler due to unknown errors
+          pytest tests/wl_tests_work_area --ignore=tests/wl_tests_work_area/test_profiler.py
+
+          pytest --ignore=tests/wl_tests_nlp --ignore=tests/wl_tests_file_area --ignore=tests/wl_tests_work_area
+
+  # Linux
+  build-linux:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+          architecture: 'x64'
+          cache: 'pip'
+
+      # Check Python version
+      - name: Check Python version
+        run: python --version
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools
+          pip install -r requirements.txt
+          # Download models and data files
+          python utils/wl_downloader_ci.py
+
+      # Run tests
+      - name: Run Tests
+        run: |
+          pytest tests/wl_tests_nlp/test_lemmatization.py
+          pytest tests/wl_tests_nlp/test_matching.py
+          pytest tests/wl_tests_nlp/test_nlp_utils.py
+          pytest tests/wl_tests_nlp/test_pos_tagging.py
+          pytest tests/wl_tests_nlp/test_sentence_tokenization.py
+          pytest tests/wl_tests_nlp/test_stop_word_lists.py
+          pytest tests/wl_tests_nlp/test_syl_tokenization.py
+          pytest tests/wl_tests_nlp/test_word_detokenization.py
+          pytest tests/wl_tests_nlp/test_word_tokenization.py
+
+          pytest --ignore=tests/wl_tests_nlp --ignore=tests/wl_tests_file_area --ignore=tests/wl_tests_work_area --ignore=tests/wl_tests_figs

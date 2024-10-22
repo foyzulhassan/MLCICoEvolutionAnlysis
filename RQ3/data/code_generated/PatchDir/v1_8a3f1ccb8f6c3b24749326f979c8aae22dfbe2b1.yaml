@@ -1,0 +1,37 @@
+name: sw
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04, macOS-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: egorpugin/sw-action@master
+
+    - name: build
+      if: matrix.os == 'windows-latest'
+      run: ./sw -static -shared -platform x86,x64 -config d,r build
+
+    - name: build
+      if: matrix.os != 'windows-latest'
+      run: ./sw -static -shared -config d,r build -Dwith-tests=1
+
+    - name: test
+      if: matrix.os != 'windows-latest'
+      run:
+        - git clone https://github.com/egorpugin/tessdata tessdata_unittest
+        - ./sw -static -shared -config d,r test -Dwith-tests=1 -Dskip-tests=lstm.*
+
+    - name: Publish Unit Test Results
+      if: matrix.os != 'windows-latest'
+      uses: EnricoMi/publish-unit-test-result-action@v1.6
+      with:
+        check_name: Unit Test Results
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        files: .sw/test/results.xml

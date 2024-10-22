@@ -1,0 +1,70 @@
+name: build
+
+on:
+  push:
+    branches: 
+      - 'ci-enable/**'
+      - 'master'
+  pull_request:
+    paths-ignore:
+      - 'core/scripts/**'
+      - '**/.gitignore'
+      - '**.md'
+      - '**.csv'
+      - '**.txt'
+  workflow_dispatch:
+  
+jobs:
+  gui:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        node_version:
+          - 14
+        architecture:
+          - x64
+    steps:
+      - name: Cancel Previous Runs  
+        uses: styfle/cancel-workflow-action@0.9.0
+        with:
+          access_token: ${{ github.token }}
+      - name: Checkout Texera
+        uses: actions/checkout@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node_version }}
+          architecture: ${{ matrix.architecture }}
+      - uses: actions/cache@v2
+        with:
+          path: |
+            core/new-gui/node_modules
+            core/new-gui/multi-target/node_modules
+          key: ${{ runner.os }}-yarn-cache-v3-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-cache-v3-
+      - name: Install dependency
+        run: yarn --cwd core/new-gui install --frozen-lockfile --progress=false
+      - name: Run frontend unit tests
+        run: yarn --cwd core/new-gui run test:ci
+      - name: Prod build
+        run: yarn --cwd core/new-gui run build
+
+  amber:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs  
+        uses: styfle/cancel-workflow-action@0.9.0
+        with:
+          access_token: ${{ github.token }}
+      - name: Checkout Texera
+        uses: actions/checkout@v2
+      - uses: coursier/cache-action@v6
+      - name: Lint with scalafmt
+        run: cd core/amber && sbt scalafmtCheckAll
+      - name: Compile with sbt
+        run: cd core/amber && sbt clean compile
+      - name: Run backend tests
+        run: cd core/amber && sbt -v -J-Xmx2G test

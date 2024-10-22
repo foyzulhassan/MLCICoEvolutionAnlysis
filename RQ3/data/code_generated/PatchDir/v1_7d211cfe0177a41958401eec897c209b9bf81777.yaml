@@ -1,0 +1,27 @@
+on: [ push ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        run:
+          sudo systemctl enable mysql.service
+          sudo systemctl start mysql.service
+
+#      - uses: mirromutth/mysql-action@v1.1
+#        with:
+#          mysql version: '5.7'
+#          mysql database: 'wordpress'
+#          mysql user: 'wordpress'
+#          mysql password: 'password'
+
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
+
+      - name: Test
+        uses: ziodave/wordpress-tests@php5.6-phpunit4.8-wordpress4.4-v0.0.1
+        with:
+          arg0: -c
+          arg1: /github/workspace/phpunit.xml

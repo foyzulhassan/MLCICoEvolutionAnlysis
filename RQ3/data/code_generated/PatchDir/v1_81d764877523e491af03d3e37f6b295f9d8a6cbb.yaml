@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Simulate test failure
+        run: exit 1
+
+      - uses: JasonEtco/create-an-issue@v2.4.0
+        name: Create issue if download tests failed
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.workflow }}
+          JOB: ${{ github.job }}
+          ID: ${{ github.run_id }}
+        with:
+          filename: .github/failed_schedule_issue_template.md

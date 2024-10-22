@@ -1,0 +1,45 @@
+name: Unittest
+
+on:
+  push:
+    branches:
+      - master
+  pull_request: {}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tf-version: [1.14.0, 1.15.2, 2.0.1, 2.1.0, 2.2.0rc0]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          pip install tensorflow==${{matrix.tf-version}}
+          pip install -e .[test]
+      - name: Test with pytest
+        run: pytest . -n auto
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.6
+      - name: Install dependencies
+        run: |
+          pip install tensorflow-cpu==2.1.0
+          pip install -e .[test]
+      - name: Generate coverage report
+        run: pytest . -n auto --cov=larq --cov-report=xml --cov-config=.coveragerc
+      - name: Upload coverage to Codecov
+        run: curl -s https://codecov.io/bash | bash -s -- -t $token -f ./coverage.xml -F unittests
+        env:
+          token: ${{secrets.CODECOV_TOKEN}}

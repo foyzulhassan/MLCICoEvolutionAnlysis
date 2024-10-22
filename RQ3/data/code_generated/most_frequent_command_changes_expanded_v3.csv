@@ -1,0 +1,200 @@
+"('Insert', 'branches', 'master', '')",2191
+"('Insert', 'jobs', 'jobs', '')",1128
+"('Delete', 'jobs', 'jobs', '')",1039
+"('Update', 'python-version', 'PYTHON-VERSION', '')",940
+"('Tree-Addition', 'python-version', 'PYTHON-VERSION', '')",878
+"('Tree-Delete', 'python-version', 'PYTHON-VERSION', '')",762
+"('Insert', 'push', 'branches:master', '')",728
+"('Insert', 'pull_request', 'branches:master', '')",560
+"('Update', 'uses', 'actions/checkout@v2', '')",433
+"('Update', 'run', 'run', '')",396
+"('Insert', 'on', 'on', '')",373
+"('Tree-Addition', 'shell', 'bash', '')",338
+"('Update', 'name', 'name', '')",279
+"('Insert', 'steps', 'steps', '')",260
+"('Update', 'uses', 'actions/setup-python@v2', '')",256
+"('Tree-Addition', 'on', 'push', '')",220
+"('Update', 'uses', 'actions/checkout@v3', '')",218
+"('Insert', 'on', 'push:branches:master', 'pull_request:branches:master')",202
+"('Tree-Addition', 'steps', 'name:Get', 'current date id:date if:failure() run:echo \\""::set-output name=date::$(date +\'%Y-%m-%d\')\\""')",192
+"('Update', 'uses', 'uses', '')",182
+"('Tree-Addition', 'on', 'push', 'pull_request')",177
+"('Update', 'branches', 'master', '')",164
+"('Tree-Addition', 'steps', 'name:Run', 'log collector if:failure() shell:bash run:python ./scripts/container_log_collector.py\\n')",163
+"('Update', 'uses', 'actions/checkout@v1', '')",163
+"('Tree-Addition', 'runs-on', 'ubuntu-latest', '')",161
+"('Tree-Addition', 'steps', 'name:Get', 'job name and url id:job if:failure() run:echo \\""::set-output name=job::$(echo ${{ github.job }})\\""\\necho \\""::set-output name=url::$(echo ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\\""\\n')",148
+"('Tree-Addition', 'steps', 'name:Upload', 'logs to GitHub uses:actions/upload-artifact@master if:failure() with:name:${{ matrix.os }}-${{ steps.job_name.outputs.job_name }}-logs-${{ steps.date.outputs.date }} path:./logs/${{ steps.job_name.outputs.job_name}}/')",147
+"('Update', 'runs-on', 'ubuntu-latest', '')",147
+"('Tree-Addition', 'on', 'pull_request', '')",146
+"('Insert', 'branches', 'main', '')",141
+"('Insert', 'on', 'push:branches:master', '')",130
+"('Tree-Addition', 'steps', 'name:Mandatory', ""Container cleanup if:steps.changes.outputs.stack == 'true' continue-on-error:shell:bash run:docker rm `docker ps -aq` --force || true\\ndocker volume prune -f || true\\n"")",123
+"('Update', 'if', 'if', '')",123
+"('Insert', 'with', 'python-version:3.x', '')",120
+"('Update', 'env', 'env', '')",120
+"('Update', 'with', 'with', '')",116
+"('Update', 'tags', 'type=raw,value=${{', 'env.GRID_VERSION }}\\ntype=raw,value=beta\\n')",114
+"('Update', 'on', 'push', '')",114
+"('Tree-Addition', 'name', 'CI', '')",113
+"('Update', 'os', 'ubuntu-latest', '')",112
+"('Insert', 'tags', '*', '')",109
+"('Tree-Addition', 'workflow_dispatch', '', '')",109
+"('Insert', 'python-version', 'PYTHON-VERSION', '')",105
+"('Tree-Addition', 'if', 'steps.changes.outputs.stack', ""== 'true'"")",104
+"('Tree-Addition', 'runs-on', '${{', 'matrix.os }}')",101
+"('Update', 'uses', 'actions/setup-python@v1', '')",101
+"('Update', 'uses', 'actions/setup-python@v4', '')",99
+"('Insert', 'on', 'push', '')",99
+"('Tree-Addition', 'os', 'ubuntu-latest', '')",98
+"('Tree-Addition', 'os', 'windows-latest', '')",98
+"('Update', 'if', 'failure()', '')",97
+"('Update', 'build', 'build', '')",93
+"('Update', 'runs-on', '${{', 'matrix.os }}')",90
+"('Tree-Addition', 'fail-fast', '', '')",90
+"('Tree-Addition', 'if', 'steps.changes.outputs.backend', ""== 'true'"")",90
+"('Insert', 'on', 'push', 'pull_request')",90
+"('Insert', 'with', 'with', '')",89
+"('Insert', 'types', 'created', '')",89
+"('Tree-Addition', 'steps', 'name:Get', 'job name and url id:job_name if:failure() run:echo \\""::set-output name=job_name::$(echo ${{ github.job }})\\""\\necho \\""::set-output name=url::$(echo ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\\""\\n')",87
+"('Update', 'os', 'macos-latest', '')",86
+"('Tree-Addition', 'continue-on-error', '', '')",86
+"('Update', 'uses', 'actions/cache@v3', '')",83
+"('Insert', 'julia-arch', 'x86', '')",79
+"('Tree-Addition', 'if', 'failure()', '')",79
+"('Insert', 'branches', 'dev', '')",78
+"('Insert', 'workflow_run', 'workflows:ci', 'on ubuntu ci on centos7 ci on debian11 ci on macos ci on windows publish doc publish paper pdf CI centos7 debian11 doc MacOS Windows Test import espnet Check kaldi scripts types:requested')",72
+"('Insert', 'on', 'workflow_run:workflows:ci', 'on ubuntu ci on centos7 ci on debian11 ci on macos ci on windows publish doc publish paper pdf CI centos7 debian11 doc MacOS Windows Test import espnet Check kaldi scripts types:requested')",72
+"('Tree-Delete', 'os', 'windows-latest', '')",72
+"('Insert', 'push', 'push', '')",72
+"('Tree-Addition', 'steps', 'uses:actions/checkout@v2', '')",71
+"('Tree-Addition', 'steps', 'name:Get', 'pull request url id:pull_request if:failure() run:echo \\""::set-output name=url::$(echo ${{ github.event.pull_request.html_url }})\\""\\n')",71
+"('Tree-Addition', 'with', 'with', '')",70
+"('Update', 'runs-on', 'runs-on', '')",69
+"('Update', 'on', 'pull_request', '')",69
+"('Tree-Addition', 'steps', 'name:Job', 'Report Status if:failure() uses:ravsamhq/notify-slack-action@v2 with:status:${{ job.status }} notify_when:failure notification_title: {workflow} has {status_message} message_format:${{matrix.os}} {emoji} *{job}* {status_message} in {run_url} footer:Find the PR here ${{ steps.pull_request.outputs.url }} mention_users:U01LNCACY03,U8KUAD396,UNMQ2SJSW,U01SAESBJA0 mention_users_when:failure,warnings env:SLACK_WEBHOOK_URL:${{ secrets.ACTION_MONITORING_SLACK_WEBHOOK_URL }}')",66
+"('Tree-Addition', 'name', 'CodeQL', '')",66
+"('Update', 'run', 'echo', '\\""::set-output name=job::$(echo ${{ github.job }})\\""\\necho \\""::set-output name=url::$(echo ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\\""\\n')",65
+"('Update', 'uses', 'actions/cache@v2', '')",65
+"('Update', 'id', 'job', '')",65
+"('Update', 'uses', 'docker/build-push-action@v4', '')",64
+"('Tree-Addition', 'jobs', 'TagBot:runs-on:ubuntu-latest', 'steps:uses:JuliaRegistries/TagBot@v1 with:token:${{ secrets.GITHUB_TOKEN }}')",64
+"('Tree-Addition', 'on', 'schedule:cron:0', '* * * *')",64
+"('Tree-Addition', 'permissions', 'contents:read', '')",62
+"('Update', 'working-directory', 'working-directory', '')",62
+"('Tree-Addition', 'name', 'CompatHelper', '')",61
+"('Update', 'os', 'windows-latest', '')",61
+"('Insert', 'branches', '*', '')",61
+"('Update', 'uses', 'actions/upload-artifact@v2', '')",59
+"('Tree-Addition', 'branches', 'master', '')",58
+"('Update', 'shell', 'shell', '')",57
+"('Tree-Addition', 'name', 'Upload', 'Python Package')",56
+"('Update', 'uses', 'actions/upload-artifact@v3', '')",56
+"('Update', 'name', 'Install', 'dependencies')",55
+"('Tree-Delete', 'continue-on-error', '', '')",55
+"('Update', 'tags', 'type=raw,value=${{', 'env.GRID_VERSION }}\\ntype=raw,value=latest\\n')",54
+"('Update', 'shell', 'bash', '')",54
+"('Delete', 'os', 'ubuntu-latest', '')",54
+"('Insert', 'build', 'build', '')",53
+"('Update', 'python-version', 'python-version', '')",53
+"('Insert', 'branches', 'branches', '')",53
+"('Tree-Addition', 'steps', 'steps', '')",52
+"('Tree-Addition', 'name', 'build', '')",52
+"('Update', 'os', 'ubuntu-18.04', '')",52
+"('Insert', 'push', 'branches:main', '')",52
+"('Tree-Addition', 'shell', 'bash', '-l {0}')",51
+"('Insert', 'tags', 'v*', '')",50
+"('Tree-Addition', 'name', 'Python', 'package')",50
+"('Update', 'uses', 'codecov/codecov-action@v1', '')",50
+"('Tree-Addition', 'on', 'workflow_dispatch', '')",49
+"('Update', 'os', 'os', '')",49
+"('Insert', 'os', 'ubuntu-latest', '')",49
+"('Tree-Addition', 'cache-to', 'type=inline', '')",48
+"('Insert', 'paths', 'tools/**', 'setup.py')",48
+"('Update', 'uses', 'docker/build-push-action@v3', '')",48
+"('Tree-Addition', 'on', 'push:branches:master', '')",48
+"('Insert', 'branches', 'dev', 'main 0.8')",48
+"('Tree-Addition', 'defaults', 'run:shell:bash', '')",47
+"('Update', 'runs-on', 'ubuntu-18.04', '')",47
+"('Tree-Addition', 'env', 'env', '')",47
+"('Insert', 'on', 'push:branches:master', 'pull_request:')",46
+"('Insert', 'on', 'pull_request:types:closed', 'branches:master paths:tools/** setup.py')",46
+"('Insert', 'branches', 'develop', '')",46
+"('Update', 'python', 'PYTHON-VERSION', '')",45
+"('Update', 'branches', 'main', '')",45
+"('Tree-Addition', 'cache', 'pip', '')",44
+"('Insert', 'on', 'pull_request:branches:master', 'push:branches:master tags:*')",44
+"('Tree-Addition', 'os', 'macos-latest', '')",44
+"('Tree-Addition', 'steps', 'uses:intelligo-systems/intelligo-actions@v1', 'with:packages:[\\""intelligo\\"", \\""intelligo-cli\\"", \\""neuro.js\\"", \\""uptime.js\\"", \\""@devmn/stepper\\"", \\""@devmn/image-viewer\\"", \\""@devmn/multi-select\\""]')",43
+"('Insert', 'matrix', 'matrix', '')",43
+"('Tree-Addition', 'name', 'Build', '')",43
+"('Update', 'tags', 'type=raw,value=${{', 'env.GRID_VERSION }}\\ntype=raw,value=0.8.0\\n')",42
+"('Update', 'schedule', 'schedule', '')",42
+"('Update', 'uses', 'actions/setup-python@v3', '')",42
+"('Delete', 'on', 'push', 'pull_request')",42
+"('Insert', 'runs-on', 'ubuntu-latest', '')",41
+"('Tree-Addition', 'run', 'run', '')",41
+"('Update', 'cron', 'cron', '')",41
+"('Update', 'cron', '0', '* * * *')",41
+"('Update', 'name', 'Set', 'up Python 3.7')",41
+"('Tree-Addition', 'on', 'release:types:created', '')",41
+"('Tree-Delete', 'os', 'macos-latest', '')",41
+"('Insert', 'push', 'branches:master', 'tags:*')",41
+"('Tree-Addition', 'env', 'SNYK_TOKEN:${{', 'secrets.SNYK_TOKEN }}')",40
+"('Update', 'name', 'Set', 'up Python 3.8')",40
+"('Tree-Addition', 'if', 'github.event.inputs.release_platform', ""== 'REAL_PYPI'"")",40
+"('Insert', 'branches', 'main', 'dev* v[0-9]+.[0-9]+.[0-9]+')",40
+"('Update', 'uses', 'conda-incubator/setup-miniconda@v2', '')",39
+"('Update', 'TWINE_USERNAME', '${{', 'secrets.PYPI_USERNAME }}')",38
+"('Tree-Addition', 'steps', 'name:Mandatory', ""Container cleanup if:steps.changes.outputs.stack == 'true' continue-on-error:shell:bash run:docker rm `docker ps -aq` --force || true\\ndocker volume prune -f || true"")",38
+"('Tree-Delete', 'shell', 'bash', '')",38
+"('Update', 'TWINE_PASSWORD', '${{', 'secrets.PYPI_PASSWORD }}')",38
+"('Insert', 'uses', 'actions/checkout@master', '')",38
+"('Update', 'id', 'id', '')",38
+"('Tree-Addition', 'workflow_call', '', '')",38
+"('Delete', 'branches', 'master', '')",38
+"('Insert', 'branches', 'nightly', 'main release/*')",38
+"('Tree-Addition', 'secrets', 'inherit', '')",37
+"('Update', 'name', '${{', 'matrix.os }}-${{ steps.job_name.outputs.job_name }}-logs-${{ steps.date.outputs.date }}')",37
+"('Update', 'uses', 'actions/cache@v1', '')",37
+"('Update', 'if', 'github.repository', ""== 'OpenMined/PySyft'"")",37
+"('Tree-Addition', 'on', 'release:types:published', '')",37
+"('Insert', 'workflows', 'workflows', '')",36
+"('Insert', 'workflows', 'ci', 'on ubuntu ci on centos7 ci on debian11 ci on macos ci on windows publish doc publish paper pdf CI centos7 debian11 doc MacOS Windows Test import espnet Check kaldi scripts')",36
+"('Insert', 'workflows', 'publish', 'doc')",36
+"('Insert', 'workflows', 'CI', 'centos7 debian9 doc')",36
+"('Insert', 'issue_comment', 'types:created', '')",36
+"('Tree-Delete', 'runs-on', '${{', 'matrix.os }}')",36
+"('Insert', 'workflow_run', 'workflows:CI', 'centos7 debian9 doc types:requested')",36
+"('Insert', 'matrix', 'julia-version:1.2.0', 'julia-arch:x86 os:ubuntu-latest')",36
+"('Insert', 'strategy', 'matrix:julia-version:1.2.0', 'julia-arch:x86 os:ubuntu-latest')",36
+"('Tree-Addition', 'name', 'cancel', 'workflows')",36
+"('Tree-Addition', 'jobs', 'cancel:runs-on:ubuntu-latest', 'steps:uses:styfle/cancel-workflow-action@0.11.0 with:workflow_id:${{ github.event.workflow.id }}')",36
+"('Tree-Addition', 'needs', 'release-checks', '')",36
+"('Update', 'none', 'none', '')",36
+"('Tree-Addition', 'branches', 'main', '')",36
+"('Insert', 'branches', 'develop', 'trunk')",36
+"('Update', 'path', 'path', '')",35
+"('Update', 'run', 'pip', 'install importlib-metadata==4.13.0\\nbandit -r hagrid\\nsafety check -i 42923\\n')",35
+"('Delete', 'push', '', '')",35
+"('Tree-Addition', 'branches', 'dev', '')",35
+"('Tree-Delete', 'python', 'PYTHON-VERSION', '')",34
+"('Insert', 'steps', 'name:Set', 'up Python uses:actions/setup-python@v2 with:python-version:3.x')",34
+"('Tree-Addition', 'if', 'github.event_name', ""== 'workflow_dispatch' || github.actor == 'JuliaTagBot'"")",34
+"('Tree-Delete', 'if', 'failure()', '')",34
+"('Insert', 'on', 'push:tags:v*', '')",34
+"('Tree-Addition', 'python', 'PYTHON-VERSION', '')",33
+"('Tree-Addition', 'steps', 'name:Upload', 'logs to GitHub uses:actions/upload-artifact@master if:failure() with:name:${{ steps.job_name.outputs.job_name }}-logs-${{ steps.date.outputs.date }} path:./logs/${{ steps.job_name.outputs.job_name}}/')",33
+"('Tree-Addition', 'name', 'Tests', '')",33
+"('Tree-Addition', 'name', 'Test', '')",33
+"('Delete', 'python-version', 'PYTHON-VERSION', '')",33
+"('Update', 'key', 'key', '')",33
+"('Update', 'branches', 'branches', '')",33
+"('Insert', 'issue_comment', 'types:created', 'edited')",32
+"('Update', 'GITHUB_TOKEN', 'GITHUB_TOKEN', '')",32
+"('Tree-Addition', 'schedule', 'cron:0', '* * * *')",32
+"('Delete', 'schedule', 'cron:0', '* * * *')",32
+"('Tree-Delete', 'shell', 'bash', '-l {0}')",32
+"('Tree-Addition', 'cron', '0', '* * * *')",32
+"('Tree-Addition', 'uses', 'actions/checkout@v2', '')",32
+"('Tree-Addition', 'uses', 'actions/setup-python@v2', '')",32
