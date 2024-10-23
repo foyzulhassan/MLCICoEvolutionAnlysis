@@ -3,7 +3,7 @@ from collections import Counter
 from re import sub
 
 #read csv file in ../chris-analysis/Output/
-with open("normalized_commands_v3.csv", "r") as f:
+with open("C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\normalized_commands_v3_all.csv", "r", encoding ="utf-8") as f:
     reader = csv.reader(f)
     print(next(reader))
     listOfCommands = list(reader)
@@ -60,6 +60,6 @@ for elem in listOfCommands:
 most_common_commands = Counter(newListOfCommands).most_common(200)
 
 #write result to most_frequent_env_map_changes.csv
-with open('most_frequent_command_changes_expanded_v3_2.csv', 'w') as f:
+with open('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\most_frequent_command_changes_expanded_v3_all.csv', 'w' , encoding ="utf-8") as f:
     writer = csv.writer(f)
     writer.writerows(most_common_commands)

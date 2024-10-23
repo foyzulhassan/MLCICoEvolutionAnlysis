@@ -41,6 +41,6 @@ print("len of normalized data: "+str(len(normalizedData)))
 
 
 #write result to most_frequent_env_map_changes.csv
-with open('normalized_commands_v3.csv', 'w') as f:
+with open('C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\normalized_commands_v3_all.csv', 'w', encoding="utf-8") as f:
     writer = csv.writer(f)
     writer.writerows(normalizedData)

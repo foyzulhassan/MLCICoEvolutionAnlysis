@@ -36,7 +36,7 @@ def write_dicts_to_csv(dictionary , dictionary2:dict, csv_filename):
             writer.writerow([key, value, val2,0 if val2 is 0 else val2/value])    
 
 #read csv file in ../chris-analysis/Output/
-with open("C:\\paper\\co_evolution_analysis\\RQ3\\data\\code_generated\\debug_map_presence_gha_test.csv", "r") as f:
+with open("C:\\paper\\co_evolution_analysis\\RQ3\\data\\code_generated\\debug_map_presence_gha_test_all.csv", "r") as f:
     reader = csv.reader(f)
     #skip header
     next(reader)
