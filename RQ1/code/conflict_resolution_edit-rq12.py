@@ -38,6 +38,7 @@ kappa = cohen_kappa_score(df['GHACategory'], df['GHACategory_2'])
 # kappa_score = cohen_kappa_score(df['GHACategory'], df['GHACategory_2'])
 print('Kappa Score:', kappa)
 
+exit()
 # add a column 'difference' to the dataframe, which specifies if the values of GHACategory and GHACategory_2 columns are different
 df['rq1_conflict'] = df['GHACategory'] != df['GHACategory_2']
 # print how many conflicts are there
