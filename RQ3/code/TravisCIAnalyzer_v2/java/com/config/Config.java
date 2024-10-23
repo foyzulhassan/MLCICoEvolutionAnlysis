@@ -9,10 +9,10 @@ public class Config {
 
 	 //Set to the project root folder, in wherever your TravisCIAnalyzer is
 	 public static String
-	 rootDir="C:\\paper\\co_evolution_analysis\\RQ3\\data\\code_generated\\";
+	 rootDir="C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\";
 	 
 	 //repo dir location for caching repos
-	 public static String repoDir = "C:\\paper\\empirical_analysis\\data\\repos\\";
+	 public static String repoDir = "C:\\Users\\dhiarzig\\Documents\\temp_repos\\";
 	 //
 	 //text file that contains list of projects to analyze
 	 public static String gitProjList=rootDir+"github_links.txt";
@@ -27,13 +27,15 @@ public class Config {
              "after_sucess"};
 
 	 public final static String[] gha_nodesToLookForAsArray = {    
-			    "on", "jobs", "env", 
-			    "job_name", "runs-on", "strategy", "matrix", "needs", "environment", "concurrency",
-			    "steps", "name", "run", "uses", "shell", "working-directory", "continue-on-error", "with",
-			    "permissions", "defaults", "if", "secrets", "services",
-			    "deploy", "restore-keys", "save-keys", "cache", "timeout-minutes",
-			    "on_success", "on_failure", "always",
-			    "outputs", "condition"
+//			    "on", "jobs", "env",
+//			    "job_name", "runs-on", "strategy", "matrix", "needs", "environment", "concurrency",
+//			    "steps", "name", "run", "uses", "shell", "working-directory", "continue-on-error", "with",
+//			    "permissions", "defaults", "if", "secrets", "services",
+//			    "deploy", "restore-keys", "save-keys", "cache", "timeout-minutes",
+//			    "on_success", "on_failure", "always",
+//			    "outputs", "condition"
+			 	"on", "permissions", "env", "defaults", "concurrency", "jobs"
+
 			};
 	 
 		public static String travisRepoDir = "/home/alaa/alexis-project/CloneWithGetPy/travisData";
@@ -45,7 +47,7 @@ public class Config {
 	 public static String csvCmdTypeFile=rootDir+"command_type_new_ML_Non_Ml.csv";
 	 
 	 //public static String csvCITransitionFile=rootDir+"Tool_transition.csv";
-	 public static String csvCITransitionFile="C:\\paper\\co_evolution_analysis\\RQ3\\data\\cleaned_ci_modifying_commits.csv";
+	 public static String csvCITransitionFile="C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\test_3.csv";
 	 
 	 public static String csvBlockCategory=Config.rootDir+"block_type.csv";
 			 
