@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.compress.archivers.dump.DumpArchiveEntry.TYPE;
@@ -95,13 +97,20 @@ public class CommitAnalyzingUtils {
 	}
 	
 	public Map<String,Boolean> getCommandPresenceMap(List<String> allFieldsInMap,List<String> nodesToLookFor){
+
 		Map<String,Boolean> temp = nodesToLookFor.stream ()
                 .collect (Collectors.toMap (Function.identity (), 
                                             k -> false));
-		
+
+		temp.put("build", false);
+		String regex = "build(?!er).*:";
+		Pattern pattern = Pattern.compile(regex);
 		for(String field:allFieldsInMap) {
+			Matcher matcher = pattern.matcher(field);
 			if(nodesToLookFor.contains(field)) {
 				temp.replace(field, true);
+			} else  if (matcher.find() || field.contains("build-") )  {
+				temp.replace("build", true);
 			}
 		}
 		return temp;
@@ -131,13 +140,19 @@ public class CommitAnalyzingUtils {
 		return returnList;
 	}
 	public Map<String,Boolean> getCommandPresenceMapInChange(EditScript actions,List<String> nodesToLookFor){
+//		nodesToLookFor.add("build");
 		Map<String,Boolean> temp = nodesToLookFor.stream ()
                 .collect (Collectors.toMap (Function.identity (), 
                                             k -> false));
+		String regex = "build(?!er).*:";
+		Pattern pattern = Pattern.compile(regex);
 		for(Action action:actions.asList()) {
 			String parent=action.getNode().getMetadata("json_parent").toString();
+			Matcher matcher = pattern.matcher(parent);
 			if(!parent.isEmpty()&& nodesToLookFor.contains( parent.replaceAll("^\"|\"$", ""))){
 				temp.replace(parent.replaceAll("^\"|\"$", ""), true);
+			} else if ( (!parent.isEmpty() && matcher.find()) || (parent.contains("build-") ) )  {
+				temp.replace("build", true);
 			}
 		}
 		return temp;

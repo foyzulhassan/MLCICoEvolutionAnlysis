@@ -228,12 +228,12 @@ public List<String> getCmdListFromChange(String changeblock, String changestr) {
     if (str.startsWith("matrix:")) {
         str = str.replace("matrix:", "").trim();
     }
-//    if (str.startsWith("timeout-minutes:")) {
-//        str = str.replace("timeout-minutes:", "").trim();
-//    }
-//    if (str.startsWith("continue-on-error:")) {
-//        str = str.replace("continue-on-error:", "").trim();
-//    }
+    if (str.startsWith("timeout-minutes:")) {
+        str = str.replace("timeout-minutes:", "").trim();
+    }
+    if (str.startsWith("continue-on-error:")) {
+        str = str.replace("continue-on-error:", "").trim();
+    }
 
     // Normalize certain commands, for instance converting 'pip3' to 'pip'
     if (str.equals("pip3")) {
@@ -257,8 +257,8 @@ public void generateStatOnChangeBlock(TravisCIChangeBlocks changeblocks) {  // R
     Writer outputFileWriter = null;
 
     // Update file paths to reflect GHA analysis
-    String statsFile = Config.rootDir+"gha_output_statistical_analysis_expanded_keys_total_keys_stats.csv";
-    String outputFile = Config.rootDir+"\\gha_output_statistical_analysis_expanded_keys_v3.csv";
+    String statsFile = Config.rootDir+"gha_output_statistical_analysis_expanded_keys_total_keys_stats_test_diff_nodes.csv";
+    String outputFile = Config.rootDir+"gha_output_statistical_analysis_expanded_keys_v3_test_diff_nodes.csv";
     
     CSVWriter outputFileCsvWriter = null;
     CSVWriter statsFileCsvWriter = null;

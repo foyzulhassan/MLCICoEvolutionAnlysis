@@ -12,8 +12,8 @@ public class Config {
 	 rootDir="C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data_v2\\";
 	 
 	 //repo dir location for caching repos
-//	 public static String repoDir = "C:\\Users\\dhiarzig\\Documents\\temp_repos\\";
-	 public static String repoDir = "D:\\ProjectsMLCI\\";
+	 public static String repoDir = "C:\\Users\\dhiarzig\\Documents\\temp_repos\\";
+//	 public static String repoDir = "D:\\ProjectsMLCI\\";
 	 //
 	 //text file that contains list of projects to analyze
 	 public static String gitProjList=rootDir+"github_links.txt";
@@ -36,6 +36,7 @@ public class Config {
 //			    "on_success", "on_failure", "always",
 //			    "outputs", "condition"
 			 	"on", "permissions", "env", "defaults", "concurrency", "jobs"
+//			 , "build"
 
 			};
 	 
@@ -48,8 +49,9 @@ public class Config {
 	 public static String csvCmdTypeFile=rootDir+"command_type_new_ML_Non_Ml.csv";
 	 
 	 //public static String csvCITransitionFile=rootDir+"Tool_transition.csv";
-	 public static String csvCITransitionFile="C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\filtered_ml_gha_commits.csv";
-	 
+//	 public static String csvCITransitionFile="C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ1\\data\\filtered_ml_gha_commits.csv";
+	 public static String csvCITransitionFile="C:\\Users\\dhiarzig\\Documents\\VSCode Projects\\MLCICoEvolutionAnlysis\\RQ3\\data\\test_3.csv";
+
 	 public static String csvBlockCategory=Config.rootDir+"block_type.csv";
 			 
 	 public static String patchDir=rootDir+"PatchDir/";
